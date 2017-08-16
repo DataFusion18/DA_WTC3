@@ -336,7 +336,7 @@ getvol <- function(){
   #   on measurement date 38 as the mean of measurements #37 and #39.
   #downloadCSV(filename="Wdata/from HIEv/WTC_TEMP_CM_TREE-HEIGHT-DIAMETER_20121120-20140527_L1_V2.CSV,topath="data/from HIEv/")
   #size <- read.csv("data/from HIEv/WTC_TEMP_CM_TREE-HEIGHT-DIAMETER_20121120-20140527_L1_V2.CSV")
-  size <- read.csv("WTC_TEMP_CM_TREE-HEIGHT-DIAMETER_20121120-20140527_L1_V2_interpolated38.csv")
+  size <- read.csv("data/WTC_TEMP_CM_TREE-HEIGHT-DIAMETER_20121120-20140527_L1_V2_interpolated38.csv")
   names(size)[15:47] <- paste("d",substr(names(size)[15:47],start=2,stop=5),sep="")
   size <- size[,1:49]
   size$DateTime <- as.Date(size$DateTime)
