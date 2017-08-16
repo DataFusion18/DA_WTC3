@@ -45,6 +45,9 @@ names(data)[4:9] = c("GPP","Ra","LA","GPP_SE","Ra_SE","LA_SE")
 # ignore the first few days of data to start on 2013-09-17 from where we have H & D measurements
 data = subset(data, Date >= as.Date("2013-09-17") & Date <= as.Date("2014-05-27"))
 
+# write csv file with daily inputs of GPP, Ra, LA
+write.csv(data, file = "processed_data/data_GPP_Ra_LA.csv", row.names = FALSE)
+
 #- plot GPP, Ra, and LA data over time for various treatments
 i = 0
 font.size = 12
@@ -93,7 +96,7 @@ for (p in 1:length(meas)) {
 }
 
 # png("output/1_1.GPP_Ra_LA.png", units="px", width=2200, height=1600, res=220)
-pdf(file = "output/1_1.GPP_Ra_LA_over_time.pdf")
+pdf(file = "output/1.GPP_Ra_LA_over_time.pdf")
 print (do.call(grid.arrange,  plot))
 
 # data.sub <- summaryBy(GPP+Ra+LA ~ Date+chamber_type, data=data, FUN=c(mean,standard.error))
@@ -240,7 +243,7 @@ for (p in 1:length(meas)) {
   }
 }
 
-pdf(file = "output/2_1.H_D.pdf")
+pdf(file = "output/2.H_D.pdf")
 print (do.call(grid.arrange,  plot))
 
 # height.dia.sub <- summaryBy(height+diameter ~ Date+chamber_type, data=height.dia.final, FUN=c(mean,standard.error))
@@ -289,21 +292,21 @@ dev.off()
 
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
-# Script to read and setup a model for the root mass from sink limited pot experiment and WTC3 harvest dat to predict 
+# Script to read and setup a model for the root mass from sink limited pot experiment and WTC3 harvest data to predict 
 # initial root mass from Height and Diameter
-plot.summary.pot = read.csv("raw_data/plot_summary.csv")
-initial.data.pot <- read.csv("raw_data/seedling_initial.csv")
+plot.summary.pot = read.csv("data_pot_experiment/plot_summary.csv")
+initial.data.pot <- read.csv("data_pot_experiment/seedling_initial.csv")
 keeps <- c("root_mass", "diameter_15", "height")
 data.pot = initial.data.pot[ , keeps, drop = FALSE]
 names(data.pot) <- c("rootmass","diameter","height")
 data.pot$volume = as.integer(1000)
 
-harvest.data.pot <- read.csv("raw_data/seedling_mass.csv")
+harvest.data.pot <- read.csv("data_pot_experiment/seedling_mass.csv")
 harvest.data.pot$rootmass = harvest.data.pot$coarseroot + harvest.data.pot$fineroot
 keeps <- c("rootmass", "plot", "pot", "volume")
 harvest.data.pot = harvest.data.pot[ , keeps, drop = FALSE]
 
-height.dia.pot <- read.csv("raw_data/height_diameter.csv")
+height.dia.pot <- read.csv("data_pot_experiment/height_diameter.csv")
 height.dia.pot$Date <- parse_date_time(height.dia.pot$Date,"d m y")
 height.dia.pot$Date = as.Date(height.dia.pot$Date, format = "%d/%m/%Y")
 height.dia.pot = subset(height.dia.pot,Date=="2013-05-21")
@@ -336,21 +339,21 @@ data.free.pot = rbind(data.free.pot, height.dia.sub) # Merge pot exp data (initi
 rm1 <- lm(log(rootmass) ~ log(diameter) + log(height), data=data.free.pot)
 rm2 <- lm(log(rootmass) ~ log(diameter) * log(height), data=data.free.pot)
 
-png("output/2.model_comparison.png", units="px", width=2200, height=1600, res=220)
-layout(matrix(c(1,2,3,4),2,2,byrow=TRUE), widths=c(1,1), heights=c(10,10))
-par(oma = c(0, 0, 0, 0))
-visreg(rm1, "diameter")
-visreg(rm1, "height")
-visreg(rm2, "diameter", by="height", overlay=TRUE)
-visreg(rm2, "height", by="diameter", overlay=TRUE)
-dev.off()
-
-sink("Output/2.model_comparison.txt")
-cat("\n\nRootmass models:\n----------------\n### Linear regression ignoring temperature variation:");  summary(rm1)
-cat("\n### Linear regression considering interaction with temperature:"); summary(rm2)
-cat("### Comparison between both models:\n")
-AIC(rm1, rm2); BIC(rm1, rm2)
-sink()
+# png("output/2.model_comparison.png", units="px", width=2200, height=1600, res=220)
+# layout(matrix(c(1,2,3,4),2,2,byrow=TRUE), widths=c(1,1), heights=c(10,10))
+# par(oma = c(0, 0, 0, 0))
+# visreg(rm1, "diameter")
+# visreg(rm1, "height")
+# visreg(rm2, "diameter", by="height", overlay=TRUE)
+# visreg(rm2, "height", by="diameter", overlay=TRUE)
+# dev.off()
+# 
+# sink("Output/2.model_comparison.txt")
+# cat("\n\nRootmass models:\n----------------\n### Linear regression ignoring temperature variation:");  summary(rm1)
+# cat("\n### Linear regression considering interaction with temperature:"); summary(rm2)
+# cat("### Comparison between both models:\n")
+# AIC(rm1, rm2); BIC(rm1, rm2)
+# sink()
 
 # Estimate the WTC3 root mass from the fitted linear regression equation
 # Go for the regression with interaction (rm1) that suits the pot experiment (Euc.Teri.) data best
@@ -387,192 +390,192 @@ names(rootmass.harvest)[4:5] = c("RM","RM_SE")
 # biomass$RM_SE = biomass$RM_SE * 0.48 # unit conversion from gDM to gC
 
 rootmass = merge(height.dia.initial[,c("Date","T_treatment","chamber_type","RM","RM_SE")], rootmass.harvest, all = TRUE)
-data.with.RM = merge(data, rootmass, all = TRUE)
-data.with.RM$RM = data.with.RM$RM * 0.48 # unit conversion from gDM to gC
-data.with.RM$RM_SE = data.with.RM$RM_SE * 0.48 # unit conversion from gDM to gC
+rootmass$RM = rootmass$RM * 0.48 # unit conversion from gDM to gC
+rootmass$RM_SE = rootmass$RM_SE * 0.48 # unit conversion from gDM to gC
+# data.with.RM = merge(data, rootmass, all = TRUE)
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
 
 
-#--------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------
-# Script to estimate leaf mass
-harvest.wtc = read.csv("data/WTC_TEMP_CM_HARVEST-CANOPY_20140526-20140528_L1_v1.csv")
-keeps <- c("chamber", "T_treatment", "SLA", "BranchDM", "StemDM", "TotalLeafDM")
-harvest.wtc = harvest.wtc[ , keeps, drop = FALSE]
-
-# calculate canopy SLA taking the weighted average of 3 laters of canopy (low, mid, top)
-leafmass <- summaryBy(TotalLeafDM~chamber,data=harvest.wtc,FUN=sum,keep.names=F)
-harvest.wtc <- merge(harvest.wtc,leafmass,by="chamber")
-harvest.wtc$weights <- with(harvest.wtc,TotalLeafDM/TotalLeafDM.sum)
-SLA.weighted <- plyr::ddply(harvest.wtc,~chamber,summarise, SLA.weighted=weighted.mean(SLA,weights))
-harvest.wtc <- merge(harvest.wtc,SLA.weighted,by="chamber")
-
-harvest.wtc <- dplyr::summarize(group_by(harvest.wtc,chamber,T_treatment),
-                                SLA = mean(SLA.weighted,na.rm=T),
-                                BranchDM = sum(BranchDM,na.rm=T),
-                                StemDM = sum(StemDM,na.rm=T),
-                                TotalLeafDM=sum(TotalLeafDM,na.rm=T),
-                                Date = max(melted.data$Date))
-harvest.wtc$LMA = 1 / (harvest.wtc$SLA / (100*100))
-harvest.wtc = data.frame(harvest.wtc)
-harvest.wtc$chamber_type = as.factor( ifelse(harvest.wtc$chamber %in% drought.chamb, "drought", "watered") )
-
-harvest.wtc.mean <- summaryBy(SLA+BranchDM+StemDM+TotalLeafDM+LMA ~ Date+T_treatment+chamber_type, data=harvest.wtc, FUN=c(mean,standard.error,length))
-harvest.wtc.mean = harvest.wtc.mean[,-c((ncol(harvest.wtc.mean)-3) : ncol(harvest.wtc.mean))]
-names(harvest.wtc.mean) = c("Date", "T_treatment", "chamber_type","SLA", "BM", "SM", "LM", "LMA", "SLA_SE", "BM_SE", "SM_SE", "LM_SE", "LMA_SE", "sample.size")
-harvest.wtc.mean$experiment = as.factor("Harvest")
-
-# read LMA values
-leaf.trait = read.csv("data/WTC_TEMP_CM_TDLSUNSHADE-TRAIT_20131026-20140421.csv")
-names(leaf.trait)[4] = "ch"; names(leaf.trait)[6] = "T_treatment"
-leaf.trait = merge(data.frame(ch=unique(as.factor(leaf.trait$ch)), chamber= as.factor(harvest.wtc$chamber)), leaf.trait, by="ch", all=TRUE)
-leaf.trait$chamber_type = as.factor( ifelse(leaf.trait$chamber %in% drought.chamb, "drought", "watered") )
-
-leaf.trait$Date = paste( leaf.trait$Year , leaf.trait$Month , 15, sep = "-" )
-leaf.trait$Date <- as.factor(leaf.trait$Date)
-leaf.trait$Date <- parse_date_time(leaf.trait$Date,"y m d")
-leaf.trait$Date = as.Date(leaf.trait$Date, format = "%Y-%m-%d")
-keeps = c("Date", "chamber", "T_treatment", "chamber_type", "leaf", "lma")
-leaf.trait = leaf.trait[ , keeps, drop = FALSE]
-
-leaf.trait = leaf.trait[,-2]
-leaf.trait.sub <- summaryBy(lma~Date+T_treatment+chamber_type+leaf, data=leaf.trait, FUN=c(mean,standard.error,length))
-names(leaf.trait.sub)[5:7] = c("LMA","LMA_SE","sample.size")
-
-plots = list() 
-pd <- position_dodge(3)
-plots[[1]] = ggplot(data = leaf.trait.sub, aes(x=Date, y=LMA, group=leaf, colour=as.factor(leaf))) + 
-  geom_point(position=pd) + 
-  geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
-  geom_line(position=pd, data = leaf.trait.sub, aes(x=Date, y=LMA, group=leaf, colour=as.factor(leaf))) +
-  labs(colour="Treatments", shape="Leaf type", linetype="Leaf type") +
-  facet_wrap(T_treatment ~ chamber_type, scales="free_x") +
-  ylab(expression("LMA"~"(g "*m^"-2"*")")) + theme_bw() +
-  theme(legend.title = element_text(colour="black", size=font.size)) +
-  theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.15,0.94)) + theme(legend.key.height=unit(0.8,"line")) +
-  theme(legend.key = element_blank()) +
-  theme(text = element_text(size=font.size)) +
-  theme(axis.title.x = element_blank()) +
-  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-
-leaf.trait.sub1 <- summaryBy(lma~Date+T_treatment+chamber_type, data=leaf.trait, FUN=c(mean,standard.error,length))
-names(leaf.trait.sub1)[4:6] = c("LMA","LMA_SE","sample.size")
-leaf.trait.sub1$experiment = as.factor("Court")
-plots[[2]] = ggplot(data = leaf.trait.sub1, aes(x=Date, y=LMA, group=interaction(T_treatment,chamber_type), colour=as.factor(T_treatment), shape=as.factor(chamber_type))) + 
-  geom_point(position=pd) + 
-  geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
-  geom_line(position=pd, data = leaf.trait.sub1, aes(x=Date, y=LMA, group=interaction(T_treatment,chamber_type), colour=as.factor(T_treatment), linetype=as.factor(chamber_type))) + 
-  labs(colour="Treatments", shape="Chamber type", linetype="Chamber type") +
-  ylab(expression("LMA"~"(g "*m^"-2"*")")) + theme_bw() +
-  theme(legend.title = element_text(colour="black", size=font.size)) +
-  theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.5,0.9), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
-  theme(legend.key = element_blank()) +
-  theme(text = element_text(size=font.size)) +
-  theme(axis.title.x = element_blank()) +
-  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-
-# png("output/3.LMA_over_time.png", units="px", width=2200, height=1600, res=220)
-pdf(file = "output/3.LMA_Court_over_time.pdf")
-# lay <- rbind(c(1,1),c(2,3))
-# grid.arrange(grobs = plots[c(5,1,2)], layout_matrix = lay)
-plots
-dev.off()
-
-# Merge all LMA valuse from difernt experiments (Mike/Court/Harvest)
-lma.mike = read.csv("data/WTC_TEMP_CM_GX-ASAT_20130515-20140402_L2.csv")
-keeps <- c("date","chamber","leaf","T_treatment","lma")
-lma.mike = lma.mike[ , keeps, drop = FALSE]
-lma.mike = unique(lma.mike)
-lma.mike$chamber_type = as.factor( ifelse(lma.mike$chamber %in% drought.chamb, "drought", "watered") )
-names(lma.mike)[1] = "Date"
-lma.mike$Date = as.Date(lma.mike$Date)
-lma.mike = na.omit(lma.mike)
-
-lma.mike.sum <- summaryBy(lma ~ Date+T_treatment+chamber_type, data=lma.mike, FUN=c(mean,standard.error,length))
-names(lma.mike.sum)[4:6] = c("LMA","LMA_SE","sample.size")
-lma.mike.sum$experiment = as.factor("Mike")
-
-# combine all 3 lma data sets
-lma.combined = rbind(lma.mike.sum, leaf.trait.sub1, harvest.wtc.mean[,c("Date","T_treatment","chamber_type","LMA","LMA_SE","sample.size","experiment")])
-
-plots = list() 
-pd <- position_dodge(2)
-plots = ggplot(data = lma.combined, aes(x=Date, y=LMA, group=experiment, colour=as.factor(experiment))) + 
-  geom_point(position=pd) + 
-  geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
-  geom_line(position=pd, data = lma.combined, aes(x=Date, y=LMA, group=experiment, colour=as.factor(experiment))) +
-  labs(colour="Treatments", shape="Leaf type", linetype="Leaf type") +
-  facet_wrap(T_treatment ~ chamber_type, scales="free_x") +
-  ylab(expression("LMA"~"(g "*m^"-2"*")")) + theme_bw() +
-  theme(legend.title = element_text(colour="black", size=font.size)) +
-  theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.15,0.92)) + theme(legend.key.height=unit(0.8,"line")) +
-  theme(legend.key = element_blank()) +
-  theme(text = element_text(size=font.size)) +
-  theme(axis.title.x = element_blank()) +
-  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-
-
-# png("output/3.LMA_over_time.png", units="px", width=2200, height=1600, res=220)
-pdf(file = "output/3.LMA_combined_over_time.pdf")
-plots
-dev.off()
-
-#----------------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------
-
-########### how to estimate the LMA over time????????
-
-# Looking at both figures, we don’t find any particular trend over time for LMA (whether sun/shade or any treatment effect) 
-# ignoring the last points (which could be considered as an artefact) and that’s why we have decided to take one mean LMA 
-# (without considering any time effect) for individual treatment group. 
-leaf.trait.final <- summaryBy(lma ~ T_treatment+chamber_type, data=leaf.trait, FUN=c(mean,standard.error))
-names(leaf.trait.final)[3:4] = c("LMA","LMA_SE")
-
-#----------------------------------------------------------------------------------------------------------------
-# calculate daily leaf mass
-data.with.LM = merge(data.with.RM, leaf.trait.final, by=c("T_treatment", "chamber_type"), all=TRUE)
-data.with.LM$LM = (data.with.LM$LA * data.with.LM$LMA) 
-data.with.LM$LM = data.with.LM$LM * 0.48 # unit conversion from gDM to gC
-# data.with.LM$LM_SE = (((data.with.LM$LA_SE * (3)^0.5)^2 * (data.with.LM$LMA_SE * (3)^0.5)^2)/2  )^0.5
-data.with.LM$LM_SE = (((data.with.LM$LA_SE/data.with.LM$LA)^2 + (data.with.LM$LMA_SE/data.with.LM$LMA)^2 )^0.5) * data.with.LM$LM
-data.with.LM$LM_SE = data.with.LM$LM_SE * 0.48 # unit conversion from gDM to gC
-
-# Daily LM plot with SE
-plots = list() 
-plots[[1]] = ggplot(data.with.LMA, aes(x=Date, y=LM, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
-  # geom_point(position=pd) +
-  geom_ribbon(data = data.with.LMA, aes(ymin=LM-LM_SE, ymax=LM+LM_SE), linetype=2, alpha=0.1,size=0.1) +
-  # geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
-  geom_line(data = data.with.LMA, aes(x = Date, y = LM, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
-  ylab(expression("LM"~"(g C "*plant^"-1"*")")) +
-  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.with.LMA$Date), max(data.with.LMA$Date)+1)) +
-  labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
-  scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
-  theme_bw() +
-  theme(legend.title = element_text(colour="black", size=font.size)) +
-  theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.25,0.8), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
-  theme(legend.key = element_blank()) +
-  theme(text = element_text(size=font.size)) +
-  theme(axis.title.x = element_blank()) +
-  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-
-# png("output/3.LM.png", units="px", width=2200, height=1600, res=220)
+# #--------------------------------------------------------------------------------------------------
+# #----------------------------------------------------------------------------------------------------------------
+# # Script to estimate leaf mass
+# harvest.wtc = read.csv("data/WTC_TEMP_CM_HARVEST-CANOPY_20140526-20140528_L1_v1.csv")
+# keeps <- c("chamber", "T_treatment", "SLA", "BranchDM", "StemDM", "TotalLeafDM")
+# harvest.wtc = harvest.wtc[ , keeps, drop = FALSE]
+# 
+# # calculate canopy SLA taking the weighted average of 3 laters of canopy (low, mid, top)
+# leafmass <- summaryBy(TotalLeafDM~chamber,data=harvest.wtc,FUN=sum,keep.names=F)
+# harvest.wtc <- merge(harvest.wtc,leafmass,by="chamber")
+# harvest.wtc$weights <- with(harvest.wtc,TotalLeafDM/TotalLeafDM.sum)
+# SLA.weighted <- plyr::ddply(harvest.wtc,~chamber,summarise, SLA.weighted=weighted.mean(SLA,weights))
+# harvest.wtc <- merge(harvest.wtc,SLA.weighted,by="chamber")
+# 
+# harvest.wtc <- dplyr::summarize(group_by(harvest.wtc,chamber,T_treatment),
+#                                 SLA = mean(SLA.weighted,na.rm=T),
+#                                 BranchDM = sum(BranchDM,na.rm=T),
+#                                 StemDM = sum(StemDM,na.rm=T),
+#                                 TotalLeafDM=sum(TotalLeafDM,na.rm=T),
+#                                 Date = max(melted.data$Date))
+# harvest.wtc$LMA = 1 / (harvest.wtc$SLA / (100*100))
+# harvest.wtc = data.frame(harvest.wtc)
+# harvest.wtc$chamber_type = as.factor( ifelse(harvest.wtc$chamber %in% drought.chamb, "drought", "watered") )
+# 
+# harvest.wtc.mean <- summaryBy(SLA+BranchDM+StemDM+TotalLeafDM+LMA ~ Date+T_treatment+chamber_type, data=harvest.wtc, FUN=c(mean,standard.error,length))
+# harvest.wtc.mean = harvest.wtc.mean[,-c((ncol(harvest.wtc.mean)-3) : ncol(harvest.wtc.mean))]
+# names(harvest.wtc.mean) = c("Date", "T_treatment", "chamber_type","SLA", "BM", "SM", "LM", "LMA", "SLA_SE", "BM_SE", "SM_SE", "LM_SE", "LMA_SE", "sample.size")
+# harvest.wtc.mean$experiment = as.factor("Harvest")
+# 
+# # read LMA values
+# leaf.trait = read.csv("data/WTC_TEMP_CM_TDLSUNSHADE-TRAIT_20131026-20140421.csv")
+# names(leaf.trait)[4] = "ch"; names(leaf.trait)[6] = "T_treatment"
+# leaf.trait = merge(data.frame(ch=unique(as.factor(leaf.trait$ch)), chamber= as.factor(harvest.wtc$chamber)), leaf.trait, by="ch", all=TRUE)
+# leaf.trait$chamber_type = as.factor( ifelse(leaf.trait$chamber %in% drought.chamb, "drought", "watered") )
+# 
+# leaf.trait$Date = paste( leaf.trait$Year , leaf.trait$Month , 15, sep = "-" )
+# leaf.trait$Date <- as.factor(leaf.trait$Date)
+# leaf.trait$Date <- parse_date_time(leaf.trait$Date,"y m d")
+# leaf.trait$Date = as.Date(leaf.trait$Date, format = "%Y-%m-%d")
+# keeps = c("Date", "chamber", "T_treatment", "chamber_type", "leaf", "lma")
+# leaf.trait = leaf.trait[ , keeps, drop = FALSE]
+# 
+# leaf.trait = leaf.trait[,-2]
+# leaf.trait.sub <- summaryBy(lma~Date+T_treatment+chamber_type+leaf, data=leaf.trait, FUN=c(mean,standard.error,length))
+# names(leaf.trait.sub)[5:7] = c("LMA","LMA_SE","sample.size")
+# 
+# plots = list() 
+# pd <- position_dodge(3)
+# plots[[1]] = ggplot(data = leaf.trait.sub, aes(x=Date, y=LMA, group=leaf, colour=as.factor(leaf))) + 
+#   geom_point(position=pd) + 
+#   geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
+#   geom_line(position=pd, data = leaf.trait.sub, aes(x=Date, y=LMA, group=leaf, colour=as.factor(leaf))) +
+#   labs(colour="Treatments", shape="Leaf type", linetype="Leaf type") +
+#   facet_wrap(T_treatment ~ chamber_type, scales="free_x") +
+#   ylab(expression("LMA"~"(g "*m^"-2"*")")) + theme_bw() +
+#   theme(legend.title = element_text(colour="black", size=font.size)) +
+#   theme(legend.text = element_text(colour="black", size = font.size)) +
+#   theme(legend.position = c(0.15,0.94)) + theme(legend.key.height=unit(0.8,"line")) +
+#   theme(legend.key = element_blank()) +
+#   theme(text = element_text(size=font.size)) +
+#   theme(axis.title.x = element_blank()) +
+#   theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+# 
+# leaf.trait.sub1 <- summaryBy(lma~Date+T_treatment+chamber_type, data=leaf.trait, FUN=c(mean,standard.error,length))
+# names(leaf.trait.sub1)[4:6] = c("LMA","LMA_SE","sample.size")
+# leaf.trait.sub1$experiment = as.factor("Court")
+# plots[[2]] = ggplot(data = leaf.trait.sub1, aes(x=Date, y=LMA, group=interaction(T_treatment,chamber_type), colour=as.factor(T_treatment), shape=as.factor(chamber_type))) + 
+#   geom_point(position=pd) + 
+#   geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
+#   geom_line(position=pd, data = leaf.trait.sub1, aes(x=Date, y=LMA, group=interaction(T_treatment,chamber_type), colour=as.factor(T_treatment), linetype=as.factor(chamber_type))) + 
+#   labs(colour="Treatments", shape="Chamber type", linetype="Chamber type") +
+#   ylab(expression("LMA"~"(g "*m^"-2"*")")) + theme_bw() +
+#   theme(legend.title = element_text(colour="black", size=font.size)) +
+#   theme(legend.text = element_text(colour="black", size = font.size)) +
+#   theme(legend.position = c(0.5,0.9), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+#   theme(legend.key = element_blank()) +
+#   theme(text = element_text(size=font.size)) +
+#   theme(axis.title.x = element_blank()) +
+#   theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# 
+# 
+# # png("output/3.LMA_over_time.png", units="px", width=2200, height=1600, res=220)
+# pdf(file = "output/3.LMA_Court_over_time.pdf")
+# # lay <- rbind(c(1,1),c(2,3))
+# # grid.arrange(grobs = plots[c(5,1,2)], layout_matrix = lay)
 # plots
 # dev.off()
-
-#----------------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------
+# 
+# # Merge all LMA valuse from difernt experiments (Mike/Court/Harvest)
+# lma.mike = read.csv("data/WTC_TEMP_CM_GX-ASAT_20130515-20140402_L2.csv")
+# keeps <- c("date","chamber","leaf","T_treatment","lma")
+# lma.mike = lma.mike[ , keeps, drop = FALSE]
+# lma.mike = unique(lma.mike)
+# lma.mike$chamber_type = as.factor( ifelse(lma.mike$chamber %in% drought.chamb, "drought", "watered") )
+# names(lma.mike)[1] = "Date"
+# lma.mike$Date = as.Date(lma.mike$Date)
+# lma.mike = na.omit(lma.mike)
+# 
+# lma.mike.sum <- summaryBy(lma ~ Date+T_treatment+chamber_type, data=lma.mike, FUN=c(mean,standard.error,length))
+# names(lma.mike.sum)[4:6] = c("LMA","LMA_SE","sample.size")
+# lma.mike.sum$experiment = as.factor("Mike")
+# 
+# # combine all 3 lma data sets
+# lma.combined = rbind(lma.mike.sum, leaf.trait.sub1, harvest.wtc.mean[,c("Date","T_treatment","chamber_type","LMA","LMA_SE","sample.size","experiment")])
+# 
+# plots = list() 
+# pd <- position_dodge(2)
+# plots = ggplot(data = lma.combined, aes(x=Date, y=LMA, group=experiment, colour=as.factor(experiment))) + 
+#   geom_point(position=pd) + 
+#   geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
+#   geom_line(position=pd, data = lma.combined, aes(x=Date, y=LMA, group=experiment, colour=as.factor(experiment))) +
+#   labs(colour="Treatments", shape="Leaf type", linetype="Leaf type") +
+#   facet_wrap(T_treatment ~ chamber_type, scales="free_x") +
+#   ylab(expression("LMA"~"(g "*m^"-2"*")")) + theme_bw() +
+#   theme(legend.title = element_text(colour="black", size=font.size)) +
+#   theme(legend.text = element_text(colour="black", size = font.size)) +
+#   theme(legend.position = c(0.15,0.92)) + theme(legend.key.height=unit(0.8,"line")) +
+#   theme(legend.key = element_blank()) +
+#   theme(text = element_text(size=font.size)) +
+#   theme(axis.title.x = element_blank()) +
+#   theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+# 
+# 
+# # png("output/3.LMA_over_time.png", units="px", width=2200, height=1600, res=220)
+# pdf(file = "output/3.LMA_combined_over_time.pdf")
+# plots
+# dev.off()
+# 
+# #----------------------------------------------------------------------------------------------------------------
+# #----------------------------------------------------------------------------------------------------------------
+# 
+# ########### how to estimate the LMA over time????????
+# 
+# # Looking at both figures, we don’t find any particular trend over time for LMA (whether sun/shade or any treatment effect) 
+# # ignoring the last points (which could be considered as an artefact) and that’s why we have decided to take one mean LMA 
+# # (without considering any time effect) for individual treatment group. 
+# leaf.trait.final <- summaryBy(lma ~ T_treatment+chamber_type, data=leaf.trait, FUN=c(mean,standard.error))
+# names(leaf.trait.final)[3:4] = c("LMA","LMA_SE")
+# 
+# #----------------------------------------------------------------------------------------------------------------
+# # calculate daily leaf mass
+# data.with.LM = merge(data.with.RM, leaf.trait.final, by=c("T_treatment", "chamber_type"), all=TRUE)
+# data.with.LM$LM = (data.with.LM$LA * data.with.LM$LMA) 
+# data.with.LM$LM = data.with.LM$LM * 0.48 # unit conversion from gDM to gC
+# # data.with.LM$LM_SE = (((data.with.LM$LA_SE * (3)^0.5)^2 * (data.with.LM$LMA_SE * (3)^0.5)^2)/2  )^0.5
+# data.with.LM$LM_SE = (((data.with.LM$LA_SE/data.with.LM$LA)^2 + (data.with.LM$LMA_SE/data.with.LM$LMA)^2 )^0.5) * data.with.LM$LM
+# data.with.LM$LM_SE = data.with.LM$LM_SE * 0.48 # unit conversion from gDM to gC
+# 
+# # Daily LM plot with SE
+# plots = list() 
+# plots[[1]] = ggplot(data.with.LMA, aes(x=Date, y=LM, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+#   # geom_point(position=pd) +
+#   geom_ribbon(data = data.with.LMA, aes(ymin=LM-LM_SE, ymax=LM+LM_SE), linetype=2, alpha=0.1,size=0.1) +
+#   # geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
+#   geom_line(data = data.with.LMA, aes(x = Date, y = LM, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+#   ylab(expression("LM"~"(g C "*plant^"-1"*")")) +
+#   scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.with.LMA$Date), max(data.with.LMA$Date)+1)) +
+#   labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+#   scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+#   theme_bw() +
+#   theme(legend.title = element_text(colour="black", size=font.size)) +
+#   theme(legend.text = element_text(colour="black", size = font.size)) +
+#   theme(legend.position = c(0.25,0.8), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+#   theme(legend.key = element_blank()) +
+#   theme(text = element_text(size=font.size)) +
+#   theme(axis.title.x = element_blank()) +
+#   theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+# 
+# # png("output/3.LM.png", units="px", width=2200, height=1600, res=220)
+# # plots
+# # dev.off()
+# 
+# #----------------------------------------------------------------------------------------------------------------
+# #----------------------------------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
@@ -582,66 +585,45 @@ treeMass.daily <- returnTreeMass()
 # treeMassFlux <- merge(dat.hr.gf,treeMass,by=c("chamber","Date","T_treatment","Water_treatment"))
 treeMass.daily = subset(treeMass.daily, Date >= as.Date("2013-09-17") & Date <= as.Date("2014-05-26"))
 
-# treeMass = na.omit(treeMass.daily) # consider only fortnightly direct measurements of H and D 
-treeMass = treeMass.daily # consider daily data interpolated from fortnightly direct measurements of H and D
+treeMass.daily$Measurement[treeMass.daily$Date %in% as.Date("2014-05-26")] = 40
+treeMass = na.omit(treeMass.daily) # consider only fortnightly direct measurements of H and D
+# treeMass = treeMass.daily # consider daily data interpolated from fortnightly direct measurements of H and D
 
 treeMass$woodMass = treeMass$branchMass + treeMass$boleMass
 treeMass$chamber_type = as.factor( ifelse(treeMass$chamber %in% drought.chamb, "drought", "watered") )
 treeMass.sum = summaryBy(leafMass+woodMass ~ Date+T_treatment+chamber_type, data=treeMass, FUN=c(mean,standard.error))
-names(treeMass.sum)[4:7] = c("LM_harvest","WM","LM_harvest_SE","WM_SE")
+names(treeMass.sum)[4:7] = c("LM","WM","LM_SE","WM_SE")
 treeMass.sum[,c(4:7)] = treeMass.sum[,c(4:7)] * 0.48 # unit conversion from gDM to gC
 
-data.biomass = merge(data.with.LM, treeMass.sum, by = c("T_treatment", "chamber_type", "Date"), all=TRUE)
+data.biomass = merge(rootmass, treeMass.sum, by = c("Date", "T_treatment", "chamber_type"), all=TRUE)
 
 # Daily LM (using mean LMA, harvest LMA), WM and RM plot with SEs
-plots = list() 
-plots[[1]] = ggplot(data.biomass, aes(x=Date, y=LM, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
-  # geom_point(position=pd) +
-  geom_ribbon(data = data.biomass, aes(ymin=LM-LM_SE, ymax=LM+LM_SE), linetype=2, alpha=0.1,size=0.1) +
-  # geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
-  geom_line(data = data.biomass, aes(x = Date, y = LM, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
-  ylab(expression("Leaf Mass using mean LMA"~"(g C "*plant^"-1"*")")) +
-  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.biomass$Date)-2, max(data.biomass$Date)+2)) +
-  labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
-  scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
-  theme_bw() +
-  theme(legend.title = element_text(colour="black", size=font.size)) +
-  theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.3,0.88), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
-  theme(legend.key = element_blank()) +
-  theme(text = element_text(size=font.size)) +
-  theme(axis.title.x = element_blank()) +
-  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+# plots[[2]] = ggplot(data.biomass, aes(x=Date, y=LM_harvest, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+#   # geom_point(position=pd) +
+#   geom_ribbon(data = data.biomass, aes(ymin=LM_harvest-LM_harvest_SE, ymax=LM_harvest+LM_harvest_SE), linetype=2, alpha=0.1,size=0.1) +
+#   # geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
+#   geom_line(data = data.biomass, aes(x = Date, y = LM_harvest, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+#   ylab(expression("Leaf Mass using harset LMA"~"(g C "*plant^"-1"*")")) +
+#   scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.biomass$Date)-2, max(data.biomass$Date)+2)) +
+#   labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+#   scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+#   theme_bw() +
+#   theme(legend.title = element_text(colour="black", size=font.size)) +
+#   theme(legend.text = element_text(colour="black", size = font.size)) +
+#   theme(legend.position = c(0.3,0.88), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+#   theme(legend.key = element_blank()) +
+#   theme(text = element_text(size=font.size)) +
+#   theme(axis.title.x = element_blank()) +
+#   theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-plots[[2]] = ggplot(data.biomass, aes(x=Date, y=LM_harvest, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
-  # geom_point(position=pd) +
-  geom_ribbon(data = data.biomass, aes(ymin=LM_harvest-LM_harvest_SE, ymax=LM_harvest+LM_harvest_SE), linetype=2, alpha=0.1,size=0.1) +
-  # geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
-  geom_line(data = data.biomass, aes(x = Date, y = LM_harvest, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
-  ylab(expression("Leaf Mass using harset LMA"~"(g C "*plant^"-1"*")")) +
-  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.biomass$Date)-2, max(data.biomass$Date)+2)) +
-  labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
-  scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
-  theme_bw() +
-  theme(legend.title = element_text(colour="black", size=font.size)) +
-  theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.3,0.88), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
-  theme(legend.key = element_blank()) +
-  theme(text = element_text(size=font.size)) +
-  theme(axis.title.x = element_blank()) +
-  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-pdf(file = "output/4.Biomass_over_time.pdf")
-print (do.call(grid.arrange,  plots))
-
-plots = list() 
+plots = list()
+pd <- position_dodge(5)
 plots[[1]] = ggplot(data.biomass, aes(x=Date, y=WM, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
-  # geom_point(position=pd) +
-  geom_ribbon(data = data.biomass, aes(ymin=WM-WM_SE, ymax=WM+WM_SE), linetype=2, alpha=0.1,size=0.1) +
-  # geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
-  geom_line(data = data.biomass, aes(x = Date, y = WM, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+  geom_point(position=pd) +
+  geom_errorbar(position=pd, aes(ymin=WM-WM_SE, ymax=WM+WM_SE), colour="grey", width=1) +
+  # geom_ribbon(data = data.biomass, aes(ymin=WM-WM_SE, ymax=WM+WM_SE), linetype=2, alpha=0.1,size=0.1) +
+  # geom_line(data = data.biomass, aes(x = Date, y = WM, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
   ylab(expression("Wood Mass"~"(g C "*plant^"-1"*")")) +
   scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.biomass$Date)-2, max(data.biomass$Date)+2)) +
   labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
@@ -649,7 +631,7 @@ plots[[1]] = ggplot(data.biomass, aes(x=Date, y=WM, group = interaction(T_treatm
   theme_bw() +
   theme(legend.title = element_text(colour="black", size=font.size)) +
   theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.3,0.88), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.position = c(0.2,0.8), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
   theme(legend.key = element_blank()) +
   theme(text = element_text(size=font.size)) +
   theme(axis.title.x = element_blank()) +
@@ -659,9 +641,9 @@ plots[[1]] = ggplot(data.biomass, aes(x=Date, y=WM, group = interaction(T_treatm
 pd <- position_dodge(5)
 plots[[2]] = ggplot(data.biomass, aes(x=Date, y=RM, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
   geom_point(position=pd,size=2) +
-  geom_ribbon(position=pd,data = data.biomass, aes(ymin=RM-RM_SE, ymax=RM+RM_SE), linetype=2, alpha=0.1,size=0.1) +
-  # geom_errorbar(position=pd,aes(ymin=LMA-LMA_SE, ymax=LMA+LMA_SE), colour="grey", width=2) +
-  geom_line(data = data.biomass, aes(x = Date, y = RM, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) +
+  # geom_ribbon(position=pd,data = data.biomass, aes(ymin=RM-RM_SE, ymax=RM+RM_SE), linetype=2, alpha=0.1,size=0.1) +
+  geom_errorbar(position=pd,aes(ymin=RM-RM_SE, ymax=RM+RM_SE), colour="grey", width=1) +
+  # geom_line(data = data.biomass, aes(x = Date, y = RM, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) +
   ylab(expression("Root Mass"~"(g C "*plant^"-1"*")")) +
   scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.biomass$Date)-2, max(data.biomass$Date)+2)) +
   labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
@@ -669,15 +651,35 @@ plots[[2]] = ggplot(data.biomass, aes(x=Date, y=RM, group = interaction(T_treatm
   theme_bw() +
   theme(legend.title = element_text(colour="black", size=font.size)) +
   theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.3,0.88), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.position = c(0.2,0.8), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
   theme(legend.key = element_blank()) +
   theme(text = element_text(size=font.size)) +
   theme(axis.title.x = element_blank()) +
   theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
+pdf(file = "output/2.Biomass_litter_tnc.pdf")
 print (do.call(grid.arrange,  plots))
-dev.off()
+
+plots = list()
+plots[[1]] = ggplot(data.biomass, aes(x=Date, y=LM, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+  geom_point(position=pd) +
+  # geom_ribbon(data = data.biomass, aes(ymin=LM-LM_SE, ymax=LM+LM_SE), linetype=2, alpha=0.1,size=0.1) +
+  geom_errorbar(position=pd,aes(ymin=LM-LM_SE, ymax=LM+LM_SE), colour="grey", width=1) +
+  # geom_line(data = data.biomass, aes(x = Date, y = LM, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+  ylab(expression("Leaf Mass"~"(g C "*plant^"-1"*")")) +
+  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.biomass$Date)-2, max(data.biomass$Date)+2)) +
+  labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+  scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+  theme_bw() +
+  theme(legend.title = element_text(colour="black", size=font.size)) +
+  theme(legend.text = element_text(colour="black", size = font.size)) +
+  theme(legend.position = c(0.2,0.8), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.key = element_blank()) +
+  theme(text = element_text(size=font.size)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
 #----------------------------------------------------------------------------------------------------------------
 
@@ -697,7 +699,7 @@ litterfall.cast = dcast.data.table(litterfall, chamber ~ Date, value.var = 'litt
 litterfall.cum <- litterfall.cast[, as.list(cumsum(unlist(.SD))), by = chamber]
 
 litterfall.cum.melt <- melt(litterfall.cum, id.vars = "chamber")
-litterfall.cum.melt = merge(litterfall.cum.melt, harvest.wtc[,c("chamber","T_treatment")])
+litterfall.cum.melt = merge(litterfall.cum.melt, unique(treeMass[,c("chamber","T_treatment")]), all=TRUE)
 litterfall.cum.melt$chamber_type = as.factor( ifelse(litterfall.cum.melt$chamber %in% drought.chamb, "drought", "watered") )
 names(litterfall.cum.melt)[2:3] = c("Date","litter")
 litterfall.cum.melt$Date = as.Date(litterfall.cum.melt$Date)
@@ -714,14 +716,15 @@ litterfall.cum.melt = rbind(litterfall.initial, litterfall.cum.melt)
 litterfall.cum.melt$litter = litterfall.cum.melt$litter * 0.48 # unit conversion from gDM to gC
 litterfall.cum.melt$litter_SE = litterfall.cum.melt$litter_SE * 0.48 # unit conversion from gDM to gC
 
-data.with.litter = merge(data.with.LM, litterfall.cum.melt, all=TRUE)
-  
-plots[[2]] = ggplot(data.with.litter[complete.cases(data.with.litter$litter),], aes(x=Date, y=litter, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
-  geom_point() +
-  geom_errorbar(aes(ymin=litter-litter_SE, ymax=litter+litter_SE), colour="grey", width=2) +
-  geom_line(data = data.with.litter[complete.cases(data.with.litter$litter),], aes(x = Date, y = litter, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+data.biomass = merge(data.biomass, litterfall.cum.melt, all=TRUE)
+
+pd <- position_dodge(5)
+plots[[2]] = ggplot(data.biomass[complete.cases(data.biomass$litter),], aes(x=Date, y=litter, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+  geom_point(position=pd) +
+  geom_errorbar(position=pd, aes(ymin=litter-litter_SE, ymax=litter+litter_SE), colour="grey", width=1) +
+  # geom_line(position=pd, data = data.biomass[complete.cases(data.biomass$litter),], aes(x = Date, y = litter, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
   ylab(expression("Leaf Litter"~"(g C "*plant^"-1"*")")) +
-  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(melted.data.sub$Date), max(melted.data.sub$Date)+1)) +
+  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.biomass$Date)-2, max(data.biomass$Date)+2)) +
   labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
   scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
   theme_bw() +
@@ -734,79 +737,146 @@ plots[[2]] = ggplot(data.with.litter[complete.cases(data.with.litter$litter),], 
   theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
-data.with.litter$litter_ratio = data.with.litter$litter / data.with.litter$LM * 100
-data.with.litter$litter_ratio_SE = (((data.with.litter$litter_SE/(3)^0.5)^2 / (data.with.litter$LM_SE/(3)^0.5)^2 )/2 )^0.5
+print (do.call(grid.arrange,  plots))
+# dev.off()
 
-plots[[3]] = ggplot(data.with.litter[complete.cases(data.with.litter$litter),], aes(x=Date, y=litter_ratio, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
-  geom_point() +
-  geom_errorbar(aes(ymin=litter_ratio - litter_ratio_SE, ymax=litter_ratio + litter_ratio_SE), colour="grey", width=2) +
-  geom_line(data = data.with.litter[complete.cases(data.with.litter$litter),], aes(x = Date, y = litter_ratio, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
-  ylab("Litterfall ratio (% of LM)") +
-  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(melted.data.sub$Date), max(melted.data.sub$Date)+1)) +
-  labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
-  scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
-  theme_bw() +
-  theme(legend.title = element_text(colour="black", size=font.size)) +
-  theme(legend.text = element_text(colour="black", size = font.size)) +
-  theme(legend.position = c(0.25,0.8), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
-  theme(legend.key = element_blank()) +
-  theme(text = element_text(size=font.size)) +
-  theme(axis.title.x = element_blank()) +
-  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+# data.with.litter$litter_ratio = data.with.litter$litter / data.with.litter$LM * 100
+# data.with.litter$litter_ratio_SE = (((data.with.litter$litter_SE/(3)^0.5)^2 / (data.with.litter$LM_SE/(3)^0.5)^2 )/2 )^0.5
+
+# plots[[3]] = ggplot(data.with.litter[complete.cases(data.with.litter$litter),], aes(x=Date, y=litter_ratio, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+#   geom_point() +
+#   geom_errorbar(aes(ymin=litter_ratio - litter_ratio_SE, ymax=litter_ratio + litter_ratio_SE), colour="grey", width=2) +
+#   geom_line(data = data.with.litter[complete.cases(data.with.litter$litter),], aes(x = Date, y = litter_ratio, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+#   ylab("Litterfall ratio (% of LM)") +
+#   scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(melted.data.sub$Date), max(melted.data.sub$Date)+1)) +
+#   labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+#   scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+#   theme_bw() +
+#   theme(legend.title = element_text(colour="black", size=font.size)) +
+#   theme(legend.text = element_text(colour="black", size = font.size)) +
+#   theme(legend.position = c(0.25,0.8), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+#   theme(legend.key = element_blank()) +
+#   theme(text = element_text(size=font.size)) +
+#   theme(axis.title.x = element_blank()) +
+#   theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
 # png("output/3.LM_litterfall.png", units="px", width=2200, height=1600, res=220)
-pdf(file = "output/3.LM_litterfall.pdf")
+# pdf(file = "output/3.LM_litterfall.pdf")
+# print (do.call(grid.arrange,  plots))
+# dev.off()
+
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+
+
+
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+# Script to read the leaf storage data 
+tnc = read.csv("data/WTC_TEMP_CM_LEAFCARB_20130515-20140402_L2.csv") # unit = mg of tnc per g of dry leafmass
+tnc = na.omit(tnc)
+tnc$Date = as.Date(tnc$Date)
+tnc = subset(tnc, Date >= as.Date("2013-09-17") & Date <= as.Date("2014-05-27"))
+tnc$chamber_type = as.factor( ifelse(tnc$chamber %in% drought.chamb, "drought", "watered") )
+keeps <- c("Date", "chamber", "T_treatment", "chamber_type", "TNC_mgg")
+tnc = tnc[ , keeps, drop = FALSE]
+
+tnc.mean <- summaryBy(TNC_mgg ~ Date+T_treatment+chamber_type, data=tnc, FUN=c(mean,standard.error))
+names(tnc.mean)[4:5] = c("tnc.conc","tnc.conc_SE")
+
+# unit conversion: 1 g tnc has 0.4 gC (12/30) and 1 g plant has 0.48 gC
+tnc.mean$tnc.conc = tnc.mean$tnc.conc / 1000 # g of tnc per g of dry leafmass
+tnc.mean$tnc.conc_SE = tnc.mean$tnc.conc_SE / 1000 # g of tnc per g of dry leafmass
+tnc.mean$tnc.conc = tnc.mean$tnc.conc * 0.4 / 0.48 # gC in tnc per gC of dry leafmass
+tnc.mean$tnc.conc_SE = tnc.mean$tnc.conc_SE * 0.4 / 0.48 # gC in tnc per gC of dry leafmass
+
+# get the daily interpotalerd LM
+treeMass.daily$chamber_type = as.factor( ifelse(treeMass.daily$chamber %in% drought.chamb, "drought", "watered") )
+treeMass.daily.sum = summaryBy(leafMass ~ Date+T_treatment+chamber_type, data=treeMass.daily, FUN=c(mean,standard.error))
+names(treeMass.daily.sum)[4:5] = c("LM","LM_SE")
+treeMass.daily.sum[,c(4:5)] = treeMass.daily.sum[,c(4:5)] * 0.48 # unit conversion from gDM to gC
+
+tnc.final = merge(tnc.mean, treeMass.daily.sum[,c("Date","T_treatment","chamber_type","LM","LM_SE")], by=c("Date","T_treatment","chamber_type"), all=FALSE)
+tnc.final$TNC = tnc.final$tnc.conc * tnc.final$LM # Unit = gC in tnc per gC in plant
+tnc.final$TNC_SE = tnc.final$tnc.conc_SE * tnc.final$LM # Unit = gC in tnc per gC in plant
+
+data.biomass = merge(data.biomass, tnc.final[,c("Date", "T_treatment", "chamber_type", "TNC", "TNC_SE")], all=TRUE)
+
+plots = list()
+pd <- position_dodge(5)
+plots[[1]] = ggplot(data.biomass[complete.cases(data.biomass$TNC),], aes(x=Date, y=TNC, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+  geom_point(position=pd) +
+  geom_errorbar(position=pd, aes(ymin=TNC-TNC_SE, ymax=TNC+TNC_SE), colour="grey", width=1) +
+  # geom_line(position=pd, data = data.biomass[complete.cases(data.biomass$TNC),], aes(x = Date, y = TNC, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+  ylab(expression("TNC"~"(g C "*plant^"-1"*")")) +
+  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data.biomass$Date)-2, max(data.biomass$Date)+2)) +
+  labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+  scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+  theme_bw() +
+  theme(legend.title = element_text(colour="black", size=font.size)) +
+  theme(legend.text = element_text(colour="black", size = font.size)) +
+  theme(legend.position = c(0.25,0.8), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.key = element_blank()) +
+  theme(text = element_text(size=font.size)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+
+df <- data.frame()
+plots[[2]] = ggplot(df)
+
 print (do.call(grid.arrange,  plots))
 dev.off()
 
+# write the file with all available inputs and data (GPP, Ra, LA, rootmass, woodmass, foliagemass, litterfall, tnc)
+write.csv(data.biomass, file = "processed_data/data_biomass_litter_tnc.csv", row.names = FALSE)
+
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+
 
 
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
-
-
-
-#----------------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------
-# Script to read and setup a model for the stem mass based on geometry usnig WTC3 harvest data 
-
-height.dia.harvest = subset(height.dia, Date %in% max(height.dia$Date))
-harvest.wtc.sub = merge(harvest.wtc[,c("Date","chamber","T_treatment","chamber_type","BranchDM","StemDM")], height.dia.harvest[,c("chamber","height","diameter")], by="chamber")
-harvest.wtc.sub$woodmass = harvest.wtc.sub$BranchDM + harvest.wtc.sub$StemDM
-  
-wood.density = read.csv("data/WTC_TEMP_CM_WOODDENSITY_20140528_L1.csv") # unit = g cm-3
-wood.density.mean <- summaryBy(wooddensity ~ chamber, data=wood.density, FUN=c(mean))
-names(wood.density.mean)[2] = c("wooddensity")
-
-harvest.wtc.sub = merge(harvest.wtc.sub, wood.density.mean, by="chamber")
-harvest.wtc.sub$diameter = harvest.wtc.sub$diameter / 10 # unit consert to cm from mm
-
-harvest.wtc.sub$stemvolume = pi / 4 * harvest.wtc.sub$height * (harvest.wtc.sub$diameter)^2
-harvest.wtc.sub$StemDM_calc = harvest.wtc.sub$stemvolume * harvest.wtc.sub$wooddensity
-harvest.wtc.sub$TF_total = harvest.wtc.sub$woodmass / harvest.wtc.sub$StemDM_calc
-
-branch.data = read.csv("data/WTC_TEMP_CM_BRANCHCENSUS_20130910-20140516_L0_v1.csv") # unit: branchlength = cm, branchdiameter = mm
-branch.data$Date = as.POSIXct(branch.data$Date,format="%d/%m/%Y",tz="GMT")
-branch.data$Date = as.Date(branch.data$Date)
-branch.data.harvest = subset(branch.data, Date %in% max(branch.data$Date))
-keeps <- c("Date", "chamber", "branchdiameter", "branchlength")
-branch.data.harvest = branch.data.harvest[ , keeps, drop = FALSE]
-branch.data.harvest$branchdiameter = branch.data.harvest$branchdiameter / 10 # unit consert to cm from mm
-branch.data.harvest = na.omit(branch.data.harvest)
-
-branch.data.harvest$branchvolume = pi / 4 * branch.data.harvest$branchlength * (branch.data.harvest$branchdiameter)^2
-branch.data.harvest = merge(branch.data.harvest, harvest.wtc.sub[,c("chamber","wooddensity")], by="chamber")
-branch.data.harvest$BranchDM = branch.data.harvest$branchvolume * branch.data.harvest$wooddensity
-branch.data.harvest.mean <- summaryBy(BranchDM ~ chamber, data=branch.data.harvest, FUN=c(sum))
-names(branch.data.harvest.mean)[2] = "BranchDM_calc"
-
-harvest.wtc.sub = merge(harvest.wtc.sub, branch.data.harvest.mean, by="chamber")
-harvest.wtc.sub$TF_branch = harvest.wtc.sub$BranchDM / harvest.wtc.sub$BranchDM_calc
-harvest.wtc.sub$TF_stem = harvest.wtc.sub$StemDM / harvest.wtc.sub$StemDM_calc
-
-TF.mean <- summaryBy(TF_total+TF_stem+TF_branch ~ Date+T_treatment+chamber_type, data=harvest.wtc.sub, FUN=c(mean,standard.error))
-# names(TF.mean)[2] = c("wooddensity")
+# # Script to read and setup a model for the stem mass based on geometry usnig WTC3 harvest data 
+# 
+# height.dia.harvest = subset(height.dia, Date %in% max(height.dia$Date))
+# harvest.wtc.sub = merge(harvest.wtc[,c("Date","chamber","T_treatment","chamber_type","BranchDM","StemDM")], height.dia.harvest[,c("chamber","height","diameter")], by="chamber")
+# harvest.wtc.sub$woodmass = harvest.wtc.sub$BranchDM + harvest.wtc.sub$StemDM
+#   
+# wood.density = read.csv("data/WTC_TEMP_CM_WOODDENSITY_20140528_L1.csv") # unit = g cm-3
+# wood.density.mean <- summaryBy(wooddensity ~ chamber, data=wood.density, FUN=c(mean))
+# names(wood.density.mean)[2] = c("wooddensity")
+# 
+# harvest.wtc.sub = merge(harvest.wtc.sub, wood.density.mean, by="chamber")
+# harvest.wtc.sub$diameter = harvest.wtc.sub$diameter / 10 # unit consert to cm from mm
+# 
+# harvest.wtc.sub$stemvolume = pi / 4 * harvest.wtc.sub$height * (harvest.wtc.sub$diameter)^2
+# harvest.wtc.sub$StemDM_calc = harvest.wtc.sub$stemvolume * harvest.wtc.sub$wooddensity
+# harvest.wtc.sub$TF_total = harvest.wtc.sub$woodmass / harvest.wtc.sub$StemDM_calc
+# 
+# branch.data = read.csv("data/WTC_TEMP_CM_BRANCHCENSUS_20130910-20140516_L0_v1.csv") # unit: branchlength = cm, branchdiameter = mm
+# branch.data$Date = as.POSIXct(branch.data$Date,format="%d/%m/%Y",tz="GMT")
+# branch.data$Date = as.Date(branch.data$Date)
+# branch.data.harvest = subset(branch.data, Date %in% max(branch.data$Date))
+# keeps <- c("Date", "chamber", "branchdiameter", "branchlength")
+# branch.data.harvest = branch.data.harvest[ , keeps, drop = FALSE]
+# branch.data.harvest$branchdiameter = branch.data.harvest$branchdiameter / 10 # unit consert to cm from mm
+# branch.data.harvest = na.omit(branch.data.harvest)
+# 
+# branch.data.harvest$branchvolume = pi / 4 * branch.data.harvest$branchlength * (branch.data.harvest$branchdiameter)^2
+# branch.data.harvest = merge(branch.data.harvest, harvest.wtc.sub[,c("chamber","wooddensity")], by="chamber")
+# branch.data.harvest$BranchDM = branch.data.harvest$branchvolume * branch.data.harvest$wooddensity
+# branch.data.harvest.mean <- summaryBy(BranchDM ~ chamber, data=branch.data.harvest, FUN=c(sum))
+# names(branch.data.harvest.mean)[2] = "BranchDM_calc"
+# 
+# harvest.wtc.sub = merge(harvest.wtc.sub, branch.data.harvest.mean, by="chamber")
+# harvest.wtc.sub$TF_branch = harvest.wtc.sub$BranchDM / harvest.wtc.sub$BranchDM_calc
+# harvest.wtc.sub$TF_stem = harvest.wtc.sub$StemDM / harvest.wtc.sub$StemDM_calc
+# 
+# TF.mean <- summaryBy(TF_total+TF_stem+TF_branch ~ Date+T_treatment+chamber_type, data=harvest.wtc.sub, FUN=c(mean,standard.error))
+# # names(TF.mean)[2] = c("wooddensity")
 
 
 
