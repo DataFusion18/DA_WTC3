@@ -52,95 +52,145 @@ write.csv(data, file = "processed_data/data_GPP_Ra_LA.csv", row.names = FALSE)
 i = 0
 font.size = 12
 plot = list()
-meas = as.factor(c("GPP","Ra","LA"))
-error = as.factor(c("GPP_SE","Ra_SE","LA_SE"))
-title = as.character(c("A","B","C"))
-pd <- position_dodge(0.5)
+pd <- position_dodge(5)
+plots[[1]] = ggplot(data=data, aes(x=Date, y=GPP, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+  geom_point(position=pd) +
+  geom_errorbar(position=pd, aes(ymin=GPP-GPP_SE, ymax=GPP+GPP_SE), colour="grey", width=1) +
+  geom_line(position=pd, data = data, aes(x = Date, y = GPP, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) +
+  ylab(expression(GPP~"(g C "*d^"-1"*")")) +
+  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data$Date)-2, max(data$Date)+2)) +
+  labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+  scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+  theme_bw() +
+  theme(legend.title = element_text(colour="black", size=font.size)) +
+  theme(legend.text = element_text(colour="black", size = font.size)) +
+  theme(legend.position = c(0.25,0.9), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.key = element_blank()) +
+  theme(text = element_text(size=font.size)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
-# data.sub <- summaryBy(GPP+Ra+LA ~ Date+T_treatment, data=data, FUN=c(mean,standard.error,length))
-data.sub <- subset(data, chamber_type %in% as.factor("watered"))
-# names(data.sub)[4:9] = c("GPP","Ra","LA","GPP_SE","Ra_SE","LA_SE")
-melted.data = melt(data.sub[,c("GPP","Ra","LA","Date","T_treatment")], id.vars=c("Date","T_treatment"))
-melted.data.error = melt(data.sub[,c("GPP_SE","Ra_SE","LA_SE","Date","T_treatment")], id.vars=c("Date","T_treatment"))
-melted.data$SE = melted.data.error$value
+plots[[2]] = ggplot(data=data, aes(x=Date, y=Ra, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+  geom_point(position=pd) +
+  geom_errorbar(position=pd, aes(ymin=Ra-Ra_SE, ymax=Ra+Ra_SE), colour="grey", width=1) +
+  geom_line(position=pd, data = data, aes(x = Date, y = Ra, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) +
+  ylab(expression(R[a]~"(g C "*d^"-1"*")")) +
+  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(data$Date)-2, max(data$Date)+2)) +
+  labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+  scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+  theme_bw() +
+  theme(legend.title = element_text(colour="black", size=font.size)) +
+  theme(legend.text = element_text(colour="black", size = font.size)) +
+  theme(legend.position = c(0.25,0.9), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.key = element_blank()) +
+  theme(text = element_text(size=font.size)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
-for (p in 1:length(meas)) {
-  melted.data.sub = subset(melted.data,variable %in% meas[p])
-  i = i + 1
-  plot[[i]] = ggplot(melted.data.sub, aes(x=Date, y=value, group = T_treatment, colour=T_treatment)) + 
-    geom_ribbon(data = melted.data.sub, aes(ymin=value-SE, ymax=value+SE), linetype=2, alpha=0.1,size=0.1) +
-    geom_line(position=pd,data = melted.data.sub, aes(x = Date, y = value, group = T_treatment, colour=T_treatment)) + 
-    scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
-    labs(colour="Temperature") +
-    scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
-    theme_bw() +
-    theme(legend.title = element_text(colour="black", size=font.size)) +
-    theme(legend.text = element_text(colour="black", size = font.size)) +
-    theme(legend.position = c(0.15,0.75)) +
-    theme(legend.key = element_blank()) +
-    theme(text = element_text(size=font.size)) +
-    theme(axis.title.x = element_blank()) +
-    theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-  
-  if (p==1) {
-    plot[[i]] = plot[[i]] + ylab(expression(GPP~"(g C "*d^"-1"*")"))
-  } else if (p==2) {
-    plot[[i]] = plot[[i]] + ylab(expression(R[a]~"(g C "*d^"-1"*")"))
-  } else if (p==3) {
-    plot[[i]] = plot[[i]] + ylab(expression("Leaf area"~"("*m^"2"*" "*plant^"-1"*")"))
-  }
-  if (p>1) {
-    plot[[i]] = plot[[i]] + guides(colour=FALSE)
-  }
-}
-
-# png("output/1_1.GPP_Ra_LA.png", units="px", width=2200, height=1600, res=220)
-pdf(file = "output/1.GPP_Ra_LA_over_time.pdf")
-print (do.call(grid.arrange,  plot))
-
-# data.sub <- summaryBy(GPP+Ra+LA ~ Date+chamber_type, data=data, FUN=c(mean,standard.error))
-# names(data.sub)[3:8] = c("GPP","Ra","LA","GPP_SE","Ra_SE","LA_SE")
-data.sub <- subset(data, T_treatment %in% as.factor("ambient"))
-melted.data = melt(data.sub[,c("GPP","Ra","LA","Date","chamber_type")], id.vars=c("Date","chamber_type"))
-melted.data.error = melt(data.sub[,c("GPP_SE","Ra_SE","LA_SE","Date","chamber_type")], id.vars=c("Date","chamber_type"))
-melted.data$SE = melted.data.error$value
-
-i = 0
-plot = list()
-for (p in 1:length(meas)) {
-  melted.data.sub = subset(melted.data,variable %in% meas[p])
-  i = i + 1
-  plot[[i]] = ggplot(melted.data.sub, aes(x=Date, y=value, group = chamber_type, colour=chamber_type)) + 
-    geom_ribbon(data = melted.data.sub, aes(ymin=value-SE, ymax=value+SE), linetype=2, alpha=0.1,size=0.1) +
-    geom_line(position=pd,data = melted.data.sub, aes(x = Date, y = value, group = chamber_type, colour=chamber_type)) + 
-    scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
-    labs(colour="Treatment") +
-    scale_color_manual(labels = c("drought", "watered"), values = c("red", "blue")) +
-    theme_bw() +
-    theme(legend.title = element_text(colour="black", size=font.size)) +
-    theme(legend.text = element_text(colour="black", size = font.size)) +
-    theme(legend.position = c(0.15,0.75)) +
-    theme(legend.key = element_blank()) +
-    theme(text = element_text(size=font.size)) +
-    theme(axis.title.x = element_blank()) +
-    theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-  
-  if (p==1) {
-    plot[[i]] = plot[[i]] + ylab(expression(GPP~"(g C "*d^"-1"*")"))
-  } else if (p==2) {
-    plot[[i]] = plot[[i]] + ylab(expression(R[a]~"(g C "*d^"-1"*")"))
-  } else if (p==3) {
-    plot[[i]] = plot[[i]] + ylab(expression("Leaf area"~"("*m^"2"*" "*plant^"-1"*")"))
-  }
-  if (p>1) {
-    plot[[i]] = plot[[i]] + guides(colour=FALSE)
-  }
-}
-
-print (do.call(grid.arrange,  plot))
+pdf(file = "output/1.GPP_Ra_over_time.pdf", width=20, height=5)
+plots[[1]]
+plots[[2]]
 dev.off()
+
+
+# #-----------------------------------------------------------------------------------------
+# #- plot GPP, Ra, and LA data over time for various treatments
+# i = 0
+# font.size = 12
+# plot = list()
+# meas = as.factor(c("GPP","Ra","LA"))
+# error = as.factor(c("GPP_SE","Ra_SE","LA_SE"))
+# title = as.character(c("A","B","C"))
+# pd <- position_dodge(0.5)
+# 
+# # data.sub <- summaryBy(GPP+Ra+LA ~ Date+T_treatment, data=data, FUN=c(mean,standard.error,length))
+# data.sub <- subset(data, chamber_type %in% as.factor("watered"))
+# # names(data.sub)[4:9] = c("GPP","Ra","LA","GPP_SE","Ra_SE","LA_SE")
+# melted.data = melt(data.sub[,c("GPP","Ra","LA","Date","T_treatment")], id.vars=c("Date","T_treatment"))
+# melted.data.error = melt(data.sub[,c("GPP_SE","Ra_SE","LA_SE","Date","T_treatment")], id.vars=c("Date","T_treatment"))
+# melted.data$SE = melted.data.error$value
+# 
+# for (p in 1:length(meas)) {
+#   melted.data.sub = subset(melted.data,variable %in% meas[p])
+#   i = i + 1
+#   plot[[i]] = ggplot(melted.data.sub, aes(x=Date, y=value, group = T_treatment, colour=T_treatment)) + 
+#     geom_ribbon(data = melted.data.sub, aes(ymin=value-SE, ymax=value+SE), linetype=2, alpha=0.1,size=0.1) +
+#     geom_line(position=pd,data = melted.data.sub, aes(x = Date, y = value, group = T_treatment, colour=T_treatment)) + 
+#     scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
+#     labs(colour="Temperature") +
+#     scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+#     theme_bw() +
+#     theme(legend.title = element_text(colour="black", size=font.size)) +
+#     theme(legend.text = element_text(colour="black", size = font.size)) +
+#     theme(legend.position = c(0.15,0.75)) +
+#     theme(legend.key = element_blank()) +
+#     theme(text = element_text(size=font.size)) +
+#     theme(axis.title.x = element_blank()) +
+#     theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+#   
+#   if (p==1) {
+#     plot[[i]] = plot[[i]] + ylab(expression(GPP~"(g C "*d^"-1"*")"))
+#   } else if (p==2) {
+#     plot[[i]] = plot[[i]] + ylab(expression(R[a]~"(g C "*d^"-1"*")"))
+#   } else if (p==3) {
+#     plot[[i]] = plot[[i]] + ylab(expression("Leaf area"~"("*m^"2"*" "*plant^"-1"*")"))
+#   }
+#   if (p>1) {
+#     plot[[i]] = plot[[i]] + guides(colour=FALSE)
+#   }
+# }
+# 
+# # png("output/1_1.GPP_Ra_LA.png", units="px", width=2200, height=1600, res=220)
+# pdf(file = "output/1.1.GPP_Ra_LA_over_time.pdf")
+# print (do.call(grid.arrange,  plot))
+# 
+# # data.sub <- summaryBy(GPP+Ra+LA ~ Date+chamber_type, data=data, FUN=c(mean,standard.error))
+# # names(data.sub)[3:8] = c("GPP","Ra","LA","GPP_SE","Ra_SE","LA_SE")
+# data.sub <- subset(data, T_treatment %in% as.factor("ambient"))
+# melted.data = melt(data.sub[,c("GPP","Ra","LA","Date","chamber_type")], id.vars=c("Date","chamber_type"))
+# melted.data.error = melt(data.sub[,c("GPP_SE","Ra_SE","LA_SE","Date","chamber_type")], id.vars=c("Date","chamber_type"))
+# melted.data$SE = melted.data.error$value
+# 
+# i = 0
+# plot = list()
+# for (p in 1:length(meas)) {
+#   melted.data.sub = subset(melted.data,variable %in% meas[p])
+#   i = i + 1
+#   plot[[i]] = ggplot(melted.data.sub, aes(x=Date, y=value, group = chamber_type, colour=chamber_type)) + 
+#     geom_ribbon(data = melted.data.sub, aes(ymin=value-SE, ymax=value+SE), linetype=2, alpha=0.1,size=0.1) +
+#     geom_line(position=pd,data = melted.data.sub, aes(x = Date, y = value, group = chamber_type, colour=chamber_type)) + 
+#     scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
+#     labs(colour="Treatment") +
+#     scale_color_manual(labels = c("drought", "watered"), values = c("red", "blue")) +
+#     theme_bw() +
+#     theme(legend.title = element_text(colour="black", size=font.size)) +
+#     theme(legend.text = element_text(colour="black", size = font.size)) +
+#     theme(legend.position = c(0.15,0.75)) +
+#     theme(legend.key = element_blank()) +
+#     theme(text = element_text(size=font.size)) +
+#     theme(axis.title.x = element_blank()) +
+#     theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+#   
+#   if (p==1) {
+#     plot[[i]] = plot[[i]] + ylab(expression(GPP~"(g C "*d^"-1"*")"))
+#   } else if (p==2) {
+#     plot[[i]] = plot[[i]] + ylab(expression(R[a]~"(g C "*d^"-1"*")"))
+#   } else if (p==3) {
+#     plot[[i]] = plot[[i]] + ylab(expression("Leaf area"~"("*m^"2"*" "*plant^"-1"*")"))
+#   }
+#   if (p>1) {
+#     plot[[i]] = plot[[i]] + guides(colour=FALSE)
+#   }
+# }
+# 
+# print (do.call(grid.arrange,  plot))
+# dev.off()
+# #-----------------------------------------------------------------------------------------
+
 
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
@@ -198,94 +248,96 @@ height.dia$chamber_type = as.factor( ifelse(height.dia$chamber %in% drought.cham
 height.dia.final <- summaryBy(height+diameter ~ Date+T_treatment+chamber_type, data=height.dia, FUN=c(mean,standard.error))
 names(height.dia.final)[4:7] = c("height", "diameter", "height_SE", "diameter_SE")
 
-#- plot H and D data over time for various treatments
-i = 0
-font.size = 12
-plot = list()
-meas = as.factor(c("diameter","height"))
-error = as.factor(c("diameter_SE","height_SE"))
-title = as.character(c("A","B","C"))
-pd <- position_dodge(0)
-
-# height.dia.sub <- summaryBy(height+diameter ~ Date+T_treatment, data=height.dia.final, FUN=c(mean,standard.error))
-# names(height.dia.sub)[3:6] = c("height","diameter","height_SE","diameter_SE")
-height.dia.sub <- subset(height.dia.final, chamber_type %in% as.factor("watered"))
-melted.height.dia = melt(height.dia.sub[,c("height","diameter","Date","T_treatment")], id.vars=c("Date","T_treatment"))
-melted.height.dia.error = melt(height.dia.sub[,c("height_SE","diameter_SE","Date","T_treatment")], id.vars=c("Date","T_treatment"))
-melted.height.dia$SE = melted.height.dia.error$value
-
-for (p in 1:length(meas)) {
-  melted.height.dia.sub = subset(melted.height.dia,variable %in% meas[p])
-  i = i + 1
-  plot[[i]] = ggplot(melted.height.dia.sub, aes(x=Date, y=value, group = T_treatment, colour=T_treatment)) + 
-    geom_ribbon(data = melted.height.dia.sub, aes(ymin=value-SE, ymax=value+SE), linetype=2, alpha=0.1,size=0.1) +
-    geom_line(position=pd,data = melted.height.dia.sub, aes(x = Date, y = value, group = T_treatment, colour=T_treatment)) + 
-    ylab(paste(as.character(meas[p]),"(mm)")) +
-    xlab("") +
-    scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
-    labs(colour="Temperature") +
-    scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
-    theme_bw() +
-    theme(legend.title = element_text(colour="black", size=font.size)) +
-    theme(legend.text = element_text(colour="black", size = font.size)) +
-    theme(legend.position = c(0.15,0.75)) +
-    theme(legend.key = element_blank()) +
-    theme(text = element_text(size=font.size)) +
-    theme(axis.title.x = element_blank()) +
-    theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-  
-  if (p==2) {
-    plot[[i]] = plot[[i]] + ylab(paste(as.character(meas[p]),"(cm)"))
-  }
-  if (p>1) {
-    plot[[i]] = plot[[i]] + guides(colour=FALSE)
-  }
-}
-
-pdf(file = "output/2.H_D.pdf")
-print (do.call(grid.arrange,  plot))
-
-# height.dia.sub <- summaryBy(height+diameter ~ Date+chamber_type, data=height.dia.final, FUN=c(mean,standard.error))
-# names(height.dia.sub)[3:6] = c("height","diameter","height_SE","diameter_SE")
-height.dia.sub <- subset(height.dia.final, T_treatment %in% as.factor("ambient"))
-melted.height.dia = melt(height.dia.sub[,c("height","diameter","Date","chamber_type")], id.vars=c("Date","chamber_type"))
-melted.height.dia.error = melt(height.dia.sub[,c("height_SE","diameter_SE","Date","chamber_type")], id.vars=c("Date","chamber_type"))
-melted.height.dia$SE = melted.height.dia.error$value
-
-i = 0
-plot = list()
-for (p in 1:length(meas)) {
-  melted.height.dia.sub = subset(melted.height.dia,variable %in% meas[p])
-  i = i + 1
-  plot[[i]] = ggplot(melted.height.dia.sub, aes(x=Date, y=value, group = chamber_type, colour=chamber_type)) + 
-    geom_ribbon(data = melted.height.dia.sub, aes(ymin=value-SE, ymax=value+SE), linetype=2, alpha=0.1,size=0.1) +
-    geom_line(position=pd,data = melted.height.dia.sub, aes(x = Date, y = value, group = chamber_type, colour=chamber_type)) + 
-    ylab(paste(as.character(meas[p]),"(mm)")) +
-    xlab("") +
-    scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
-    labs(colour="Treatment") +
-    scale_color_manual(labels = c("drought", "watered"), values = c("red", "blue")) +
-    theme_bw() +
-    theme(legend.title = element_text(colour="black", size=font.size)) +
-    theme(legend.text = element_text(colour="black", size = font.size)) +
-    theme(legend.position = c(0.15,0.75)) +
-    theme(legend.key = element_blank()) +
-    theme(text = element_text(size=font.size)) +
-    theme(axis.title.x = element_blank()) +
-    theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-  
-  if (p==2) {
-    plot[[i]] = plot[[i]] + ylab(paste(as.character(meas[p]),"(cm)"))
-  }
-  if (p>1) {
-    plot[[i]] = plot[[i]] + guides(colour=FALSE)
-  }
-}
-
-print (do.call(grid.arrange,  plot))
-dev.off()
+#----------------------------------------------------------------------------------------------------------------
+# #- plot H and D data over time for various treatments
+# i = 0
+# font.size = 12
+# plot = list()
+# meas = as.factor(c("diameter","height"))
+# error = as.factor(c("diameter_SE","height_SE"))
+# title = as.character(c("A","B","C"))
+# pd <- position_dodge(0)
+# 
+# # height.dia.sub <- summaryBy(height+diameter ~ Date+T_treatment, data=height.dia.final, FUN=c(mean,standard.error))
+# # names(height.dia.sub)[3:6] = c("height","diameter","height_SE","diameter_SE")
+# height.dia.sub <- subset(height.dia.final, chamber_type %in% as.factor("watered"))
+# melted.height.dia = melt(height.dia.sub[,c("height","diameter","Date","T_treatment")], id.vars=c("Date","T_treatment"))
+# melted.height.dia.error = melt(height.dia.sub[,c("height_SE","diameter_SE","Date","T_treatment")], id.vars=c("Date","T_treatment"))
+# melted.height.dia$SE = melted.height.dia.error$value
+# 
+# for (p in 1:length(meas)) {
+#   melted.height.dia.sub = subset(melted.height.dia,variable %in% meas[p])
+#   i = i + 1
+#   plot[[i]] = ggplot(melted.height.dia.sub, aes(x=Date, y=value, group = T_treatment, colour=T_treatment)) + 
+#     geom_ribbon(data = melted.height.dia.sub, aes(ymin=value-SE, ymax=value+SE), linetype=2, alpha=0.1,size=0.1) +
+#     geom_line(position=pd,data = melted.height.dia.sub, aes(x = Date, y = value, group = T_treatment, colour=T_treatment)) + 
+#     ylab(paste(as.character(meas[p]),"(mm)")) +
+#     xlab("") +
+#     scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
+#     labs(colour="Temperature") +
+#     scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+#     theme_bw() +
+#     theme(legend.title = element_text(colour="black", size=font.size)) +
+#     theme(legend.text = element_text(colour="black", size = font.size)) +
+#     theme(legend.position = c(0.15,0.75)) +
+#     theme(legend.key = element_blank()) +
+#     theme(text = element_text(size=font.size)) +
+#     theme(axis.title.x = element_blank()) +
+#     theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+#   
+#   if (p==2) {
+#     plot[[i]] = plot[[i]] + ylab(paste(as.character(meas[p]),"(cm)"))
+#   }
+#   if (p>1) {
+#     plot[[i]] = plot[[i]] + guides(colour=FALSE)
+#   }
+# }
+# 
+# pdf(file = "output/2.H_D.pdf")
+# print (do.call(grid.arrange,  plot))
+# 
+# # height.dia.sub <- summaryBy(height+diameter ~ Date+chamber_type, data=height.dia.final, FUN=c(mean,standard.error))
+# # names(height.dia.sub)[3:6] = c("height","diameter","height_SE","diameter_SE")
+# height.dia.sub <- subset(height.dia.final, T_treatment %in% as.factor("ambient"))
+# melted.height.dia = melt(height.dia.sub[,c("height","diameter","Date","chamber_type")], id.vars=c("Date","chamber_type"))
+# melted.height.dia.error = melt(height.dia.sub[,c("height_SE","diameter_SE","Date","chamber_type")], id.vars=c("Date","chamber_type"))
+# melted.height.dia$SE = melted.height.dia.error$value
+# 
+# i = 0
+# plot = list()
+# for (p in 1:length(meas)) {
+#   melted.height.dia.sub = subset(melted.height.dia,variable %in% meas[p])
+#   i = i + 1
+#   plot[[i]] = ggplot(melted.height.dia.sub, aes(x=Date, y=value, group = chamber_type, colour=chamber_type)) + 
+#     geom_ribbon(data = melted.height.dia.sub, aes(ymin=value-SE, ymax=value+SE), linetype=2, alpha=0.1,size=0.1) +
+#     geom_line(position=pd,data = melted.height.dia.sub, aes(x = Date, y = value, group = chamber_type, colour=chamber_type)) + 
+#     ylab(paste(as.character(meas[p]),"(mm)")) +
+#     xlab("") +
+#     scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
+#     labs(colour="Treatment") +
+#     scale_color_manual(labels = c("drought", "watered"), values = c("red", "blue")) +
+#     theme_bw() +
+#     theme(legend.title = element_text(colour="black", size=font.size)) +
+#     theme(legend.text = element_text(colour="black", size = font.size)) +
+#     theme(legend.position = c(0.15,0.75)) +
+#     theme(legend.key = element_blank()) +
+#     theme(text = element_text(size=font.size)) +
+#     theme(axis.title.x = element_blank()) +
+#     theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+#   
+#   if (p==2) {
+#     plot[[i]] = plot[[i]] + ylab(paste(as.character(meas[p]),"(cm)"))
+#   }
+#   if (p>1) {
+#     plot[[i]] = plot[[i]] + guides(colour=FALSE)
+#   }
+# }
+# 
+# print (do.call(grid.arrange,  plot))
+# dev.off()
+#----------------------------------------------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
@@ -322,7 +374,9 @@ data.free.pot = data.free.pot[,-4]
 
 # Read harvest rootmass data form WTC3 experiment
 rootmass.harvest = read.csv("data/WTC_TEMP_CM_HARVEST-ROOTS_20140529-20140606_L1_v1.csv")
-rootmass.harvest$chamber_type = as.factor( ifelse(rootmass.harvest$chamber %in% drought.chamb, "drought", "watered") )
+# rootmass.harvest$chamber_type = as.factor( ifelse(rootmass.harvest$chamber %in% drought.chamb, "drought", "watered") )
+rootmass.harvest$Date = as.Date("2014-05-26")
+rootmass.harvest = merge(unique(height.dia[,c("chamber","T_treatment","chamber_type")]), rootmass.harvest, by=c("chamber"))
 
 height.dia.sub = subset(height.dia, Date %in% as.Date("2014-05-27") & T_treatment %in% as.factor("ambient") & chamber_type %in% as.factor("watered"))
 keeps <- c("chamber", "height", "diameter")
@@ -367,14 +421,12 @@ height.dia.initial = subset(height.dia.final, Date %in% as.Date("2013-09-17"))
 height.dia.initial$RM = eq.rm(height.dia.initial$diameter, height.dia.initial$height)
 # height.dia.initial$RM_SE = (((height.dia.initial$diameter_SE/height.dia.initial$diameter)^2 + (height.dia.initial$height_SE/height.dia.initial$height)^2 )^0.5) * height.dia.initial$RM
 height.dia.initial$RM_SE = ( (((coefficients(rm2)[2]*height.dia.initial$diameter_SE/height.dia.initial$diameter)^2 + (coefficients(rm2)[3]*height.dia.initial$height_SE/height.dia.initial$height)^2 +
-      coefficients(rm2)[4]*((height.dia.initial$diameter_SE/height.dia.initial$diameter)^2 + (height.dia.initial$height_SE/height.dia.initial$height)^2) )^0.5) ) * height.dia.initial$RM
+                                 coefficients(rm2)[4]*((height.dia.initial$diameter_SE/height.dia.initial$diameter)^2 + (height.dia.initial$height_SE/height.dia.initial$height)^2) )^0.5) ) * height.dia.initial$RM
 
 
 # processing the harvest rootmass
-rootmass.harvest = merge(unique(height.dia[,c("chamber","T_treatment","chamber_type")]), rootmass.harvest[,c("chamber","chamber_type","RootDMtotal")], by=c("chamber","chamber_type"))
-rootmass.harvest$Date = as.Date("2014-05-26")
-rootmass.harvest <- summaryBy(RootDMtotal ~ Date+T_treatment+chamber_type, data=rootmass.harvest, FUN=c(mean,standard.error))
-names(rootmass.harvest)[4:5] = c("RM","RM_SE")
+rootmass.harvest.mean <- summaryBy(RootDMtotal ~ Date+T_treatment+chamber_type, data=rootmass.harvest, FUN=c(mean,standard.error))
+names(rootmass.harvest.mean)[4:5] = c("RM","RM_SE")
 
 # # initialize the biomass data frame
 # Dates = rep(seq(as.Date("2013-09-17"), as.Date("2014-05-27"), by="days"), 4)
@@ -389,7 +441,7 @@ names(rootmass.harvest)[4:5] = c("RM","RM_SE")
 # biomass$RM = biomass$RM * 0.48 # unit conversion from gDM to gC
 # biomass$RM_SE = biomass$RM_SE * 0.48 # unit conversion from gDM to gC
 
-rootmass = merge(height.dia.initial[,c("Date","T_treatment","chamber_type","RM","RM_SE")], rootmass.harvest, all = TRUE)
+rootmass = merge(height.dia.initial[,c("Date","T_treatment","chamber_type","RM","RM_SE")], rootmass.harvest.mean, all = TRUE)
 rootmass$RM = rootmass$RM * 0.48 # unit conversion from gDM to gC
 rootmass$RM_SE = rootmass$RM_SE * 0.48 # unit conversion from gDM to gC
 # data.with.RM = merge(data, rootmass, all = TRUE)
@@ -708,10 +760,10 @@ names(litterfall.cum.melt)[4:5] = c("litter","litter_SE")
 
 
 litterfall.initial = data.frame(Date = rep(as.Date("2013-09-17"), 4),
-                     T_treatment = rep(unique(data$T_treatment), each=2),
-                     chamber_type = rep(unique(data$chamber_type), 2),
-                     litter = rep(0,4),
-                     litter_SE = rep(0,4))
+                                T_treatment = rep(unique(data$T_treatment), each=2),
+                                chamber_type = rep(unique(data$chamber_type), 2),
+                                litter = rep(0,4),
+                                litter_SE = rep(0,4))
 litterfall.cum.melt = rbind(litterfall.initial, litterfall.cum.melt)
 litterfall.cum.melt$litter = litterfall.cum.melt$litter * 0.48 # unit conversion from gDM to gC
 litterfall.cum.melt$litter_SE = litterfall.cum.melt$litter_SE * 0.48 # unit conversion from gDM to gC
@@ -774,6 +826,7 @@ print (do.call(grid.arrange,  plots))
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
 # Script to read the leaf storage data 
+# read the leaf tnc data over time
 tnc = read.csv("data/WTC_TEMP_CM_LEAFCARB_20130515-20140402_L2.csv") # unit = mg of tnc per g of dry leafmass
 tnc = na.omit(tnc)
 tnc$Date = as.Date(tnc$Date)
@@ -781,9 +834,33 @@ tnc = subset(tnc, Date >= as.Date("2013-09-17") & Date <= as.Date("2014-05-27"))
 tnc$chamber_type = as.factor( ifelse(tnc$chamber %in% drought.chamb, "drought", "watered") )
 keeps <- c("Date", "chamber", "T_treatment", "chamber_type", "TNC_mgg")
 tnc = tnc[ , keeps, drop = FALSE]
-
 tnc.mean <- summaryBy(TNC_mgg ~ Date+T_treatment+chamber_type, data=tnc, FUN=c(mean,standard.error))
 names(tnc.mean)[4:5] = c("tnc.conc","tnc.conc_SE")
+
+# read the diurnal leaf tnc data - 2-hourly intervals during a sunny (20 February) and an overcast/rainy day (26 March)
+tnc.diurnal = read.csv("data/WTC_TEMP_CM_LEAFCARB-DIURNAL_20140220-20140326_R.csv") # unit = mg of tnc per g of dry leafmass
+tnc.diurnal$Sample.Date <- parse_date_time(tnc.diurnal$Sample.Date,"d m y")
+tnc.diurnal$Sample.Date = as.Date(tnc.diurnal$Sample.Date, format = "%d/%m/%Y")
+keeps <- c("Sample.Date", "Chamber", "TNC")
+tnc.diurnal = tnc.diurnal[ , keeps, drop = FALSE]
+names(tnc.diurnal) = c("Date","chamber","TNC")
+tnc.diurnal = merge(tnc.diurnal, unique(height.dia[,c("chamber","T_treatment","chamber_type")]), by="chamber")
+tnc.diurnal.mean <- summaryBy(TNC ~ Date+T_treatment+chamber_type, data=tnc.diurnal, FUN=c(mean,standard.error))
+names(tnc.diurnal.mean)[4:5] = c("tnc.conc","tnc.conc_SE")
+
+# read the diurnal leaf tnc data - trees were girdled
+tnc.girdled = read.csv("data/WTC_TEMP_CM_PETIOLEGIRDLE-LEAFMASS-AREA-CARB_20140507-20140512_L2.csv") # unit = mg of tnc per g of dry leafmass
+tnc.girdled$Date <- parse_date_time(tnc.girdled$Date,"y m d")
+tnc.girdled$Date = as.Date(tnc.girdled$Date, format = "%Y/%m/%d")
+tnc.girdled = subset(tnc.girdled, treatment %in% as.factor("control"))
+tnc.girdled$TNC = tnc.girdled$starch + tnc.girdled$soluble_sugars
+tnc.girdled = merge(tnc.girdled, unique(height.dia[,c("chamber","T_treatment","chamber_type")]), by="chamber")
+tnc.girdled.mean <- summaryBy(TNC ~ Date+T_treatment+chamber_type, data=tnc.girdled, FUN=c(mean,standard.error))
+names(tnc.girdled.mean)[4:5] = c("tnc.conc","tnc.conc_SE")
+
+# bind all available tnc data into one dataframe
+tnc.mean = rbind(tnc.mean, tnc.diurnal.mean)
+tnc.mean = rbind(tnc.mean, tnc.girdled.mean)
 
 # unit conversion: 1 g tnc has 0.4 gC (12/30) and 1 g plant has 0.48 gC
 tnc.mean$tnc.conc = tnc.mean$tnc.conc / 1000 # g of tnc per g of dry leafmass
@@ -804,7 +881,7 @@ tnc.final$TNC_SE = tnc.final$tnc.conc_SE * tnc.final$LM # Unit = gC in tnc per g
 data.biomass = merge(data.biomass, tnc.final[,c("Date", "T_treatment", "chamber_type", "TNC", "TNC_SE")], all=TRUE)
 
 plots = list()
-pd <- position_dodge(5)
+pd <- position_dodge(1)
 plots[[1]] = ggplot(data.biomass[complete.cases(data.biomass$TNC),], aes(x=Date, y=TNC, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
   geom_point(position=pd) +
   geom_errorbar(position=pd, aes(ymin=TNC-TNC_SE, ymax=TNC+TNC_SE), colour="grey", width=1) +
@@ -831,6 +908,214 @@ dev.off()
 
 # write the file with all available inputs and data (GPP, Ra, LA, rootmass, woodmass, foliagemass, litterfall, tnc)
 write.csv(data.biomass, file = "processed_data/data_biomass_litter_tnc.csv", row.names = FALSE)
+
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+
+
+
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+# Calculate daily below ground root respiration rates
+c1 = 0.48 # unit conversion from gDM to gC: 1 gDM = 0.48 gC
+q25_drake = 1.86
+
+# Coarse root respiration rates
+branch.resp = read.csv("data/WTC_TEMP_CM_GX-RBRANCH_20140513-20140522_L1_v1.csv") # Rbranch: branch respiration (nmol CO2 g-1 s-1) 
+branch.resp$date = as.Date(branch.resp$date)
+branch.resp = subset(branch.resp, date %in% as.Date("2014-05-13")) # Only consider the pre-girdling data
+branch.resp$chamber_type = as.factor( ifelse(branch.resp$chamber %in% drought.chamb, "drought", "watered") )
+branch.resp$Treatment <- as.factor(paste(branch.resp$T_treatment, branch.resp$chamber_type))
+
+# Test for any significant difference between the treatment groups
+boxplot(branch.resp$Rbranch ~ branch.resp$Treatment, xlab="Treatment", ylab=(expression("Branch wood respiration"~"(nmol CO2 "*g^"-1"*" "*s^"-1"*")")))
+
+summary(aov(Rbranch ~ Treatment, data = branch.resp)) # YES, there is significant difference accross the treatments
+t.test(branch.resp$Rbranch ~ branch.resp$T_treatment) # YES, there is significant difference accross temperatures
+t.test(branch.resp$Rbranch ~ branch.resp$chamber_type) # NO, there is no significant difference accross drought/watered treatments
+
+############ So how to group the treatments????????
+rd15.root <- summaryBy(Rbranch ~ T_treatment+chamber_type, data=branch.resp, FUN=c(mean))
+names(rd15.root)[ncol(rd15.root)] = c("rd15.coarseroot")
+rd15.root$rd15.coarseroot = rd15.root$rd15.coarseroot * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+# rd15.coarseroot$rd15.coarseroot_SE = rd15.coarseroot$rd15.coarseroot_SE * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+
+# Bole and big tap root respiration rates
+bole.resp = read.csv("data/WTC_TEMP_CM_WTCFLUX-STEM_20140528_L1_v1.csv") # Rbranch: branch respiration (nmol CO2 g-1 s-1) 
+bole.resp$chamber_type = as.factor( ifelse(bole.resp$chamber %in% drought.chamb, "drought", "watered") )
+bole.resp$Treatment <- as.factor(paste(bole.resp$T_treatment, bole.resp$chamber_type))
+
+# Test for any significant difference between the treatment groups
+boxplot(bole.resp$R_stem_nmol ~ bole.resp$Treatment, xlab="Treatment", ylab=(expression("Bole wood respiration"~"(nmol CO2 "*g^"-1"*" "*s^"-1"*")")))
+summary(aov(R_stem_nmol ~ Treatment, data = bole.resp)) # NO, there is no significant difference accross the treatments
+t.test(bole.resp$R_stem_nmol ~ bole.resp$T_treatment) # NO, there is no significant difference accross tepmeratures
+t.test(bole.resp$R_stem_nmol ~ bole.resp$chamber_type) # NO, there is no significant difference accross drought/watered treatments
+
+rd15.root$rd15.boleroot = mean(bole.resp$R_stem_nmol)
+rd15.root$rd15.boleroot = rd15.root$rd15.boleroot * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+
+# Fine root respiration rates (Constant)
+# Fine root respiration rate = 12 nmolCO2 g-1 s-1 (Ref: Drake et al. 2017: GREAT exp data)
+rd25.fineroot = 12 * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+rd15.root$rd15.fineroot = rd25.fineroot * q25_drake^((15-25)/10)
+
+# Intermediate root respiration rates
+rd15.root$rd15.intermediateroot = exp ((log(rd15.root$rd15.coarseroot) + log(rd15.root$rd15.fineroot))/2 ) # unit = gC gC-1 d-1
+
+
+#----------------------------------------------------------------------------------------------------------------
+# import site weather data, take only soil temperatures at 10 cm depth, format date stuff
+files <- list.files(path = "data/WTC_TEMP_CM_WTCMET", pattern = ".csv", full.names = TRUE)
+temp <- lapply(files, fread, sep=",")
+met.data <- rbindlist( temp )
+
+met.data <- met.data[ , c("chamber","DateTime","SoilTemp_Avg.1.","SoilTemp_Avg.2.")]
+met.data$SoilTemp <- rowMeans(met.data[,c("SoilTemp_Avg.1.","SoilTemp_Avg.2.")], na.rm=TRUE)
+met.data$Date <- as.Date(met.data$DateTime)
+
+# need to turn the datetime into hms
+met.data$DateTime <- ymd_hms(met.data$DateTime)
+met.data$time <- format(met.data$DateTime, format='%H:%M:%S')
+
+# met.data.na = met.data[is.na(met.data$SoilTemp),] # Check any NA values for soil temperature
+
+# subset by Date range of experiment
+met.data <- subset(met.data[, c("chamber","Date","time","SoilTemp")], Date  >= "2013-09-17" & Date  <= "2014-05-26")
+met.data$chamber = as.factor(met.data$chamber)
+met.data = merge(met.data, unique(height.dia[,c("chamber","T_treatment","chamber_type")]), by="chamber")
+
+# need to calculate Rdark through time using rdarkq10 equation by treatment
+met.data <- merge(met.data, rd15.root, by=c("T_treatment","chamber_type"))
+
+met.data[,c("Rd.fineroot","Rd.intermediateroot","Rd.coarseroot","Rd.boleroot")] <- 
+  with(met.data, met.data[,c("rd15.fineroot","rd15.intermediateroot","rd15.coarseroot","rd15.boleroot")] * 
+         q25_drake^((SoilTemp-15)/10)) # unit (gC per gC root per day)
+
+Rd <- summaryBy(Rd.fineroot+Rd.intermediateroot+Rd.coarseroot+Rd.boleroot ~ Date+T_treatment+chamber_type, data=met.data, FUN=mean, keep.names=TRUE , na.rm=TRUE) # Sum of all same day Rd
+# colSums(is.na(Rd)) # Check any NA values for Rd
+
+write.csv(Rd, "processed_data/Rd.csv", row.names=FALSE) # unit: gC per gC plant per day
+
+#----------------------------------------------------------------------------------------------------------------
+# Plot various root respiration data
+Rd.melt <- melt(Rd, id.vars = c("Date","T_treatment","chamber_type"))
+i = 0
+font.size = 15
+plot = list() 
+meas = as.factor(c("Rd.fineroot","Rd.intermediateroot","Rd.coarseroot","Rd.boleroot"))
+title = as.character(c("A","B","C","D"))
+pd <- position_dodge(2) # move the overlapped errorbars horizontally
+for (p in 1:length(meas)) {
+  Rd.melt.sub = subset(Rd.melt,variable %in% meas[p])
+  
+  i = i + 1
+  plot[[i]] = ggplot(Rd.melt.sub, aes(x=Date, y=value, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+    geom_point(position=pd) +
+    geom_line(position=pd,data = Rd.melt.sub, aes(x = Date, y = value, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+    ylab(expression(R[d(fineroot)]~"(g C "*g^"-1"*" C "*d^"-1"*")")) + xlab("") +
+    scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(Rd$Date)-2, max(Rd$Date)+2)) +
+    labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+    scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+    theme_bw() +
+    theme(legend.title = element_text(colour="black", size=font.size)) +
+    theme(legend.text = element_text(colour="black", size=font.size)) +
+    theme(legend.position = c(0.85,0.85), legend.box = "horizontal") + theme(legend.key.height=unit(0.9,"line")) +
+    theme(legend.key = element_blank()) +
+    theme(text = element_text(size=font.size)) +
+    theme(axis.title.x = element_blank()) +
+    theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+  
+  if (p==2) {
+    plot[[i]] = plot[[i]] + ylab(expression(R[d(intermediateroot)]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+    # plot[[i]] = plot[[i]] + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 0.75), units="line"))
+  } 
+  if (p==3) {
+    plot[[i]] = plot[[i]] + ylab(expression(R[d(coarseroot)]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+  } 
+  if (p==4) {
+    plot[[i]] = plot[[i]] + ylab(expression(R[d(boleroot)]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+  }
+}
+pdf("output/3.Rd.pdf", width=20, height=5)
+plot[1]
+plot[2]
+plot[3]
+plot[4]
+dev.off()
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+
+
+
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+# Calculate the ratios of harvest rootmass
+rootmass.harvest$RootDMbole = rootmass.harvest$RootDMbole + rootmass.harvest$CoreRoots
+rootmass.harvest$FRratio = rootmass.harvest$RootDM0to2 / rootmass.harvest$RootDMtotal
+rootmass.harvest$IRratio = rootmass.harvest$RootDM2to10 / rootmass.harvest$RootDMtotal
+rootmass.harvest$CRratio = rootmass.harvest$RootDM10up / rootmass.harvest$RootDMtotal
+rootmass.harvest$BRratio = rootmass.harvest$RootDMbole / rootmass.harvest$RootDMtotal
+rootmass.harvest$Treatment <- as.factor(paste(rootmass.harvest$T_treatment, rootmass.harvest$chamber_type))
+
+# Test for any significant difference between the treatment groups
+summary(aov(FRratio ~ Treatment, data = rootmass.harvest)) # NO, there is no significant difference accross the treatments
+summary(aov(IRratio ~ Treatment, data = rootmass.harvest)) # NO, there is no significant difference accross the treatments
+summary(aov(CRratio ~ Treatment, data = rootmass.harvest)) # NO, there is no significant difference accross the treatments
+summary(aov(BRratio ~ Treatment, data = rootmass.harvest)) # NO, there is no significant difference accross the treatments
+
+rootmass.harvest.ratio <- summaryBy(FRratio+IRratio+CRratio+BRratio ~ Date, data=rootmass.harvest, FUN=c(mean,standard.error), keep.names=TRUE , na.rm=TRUE) # Sum of all same day Rd
+names(rootmass.harvest.ratio)[2:ncol(rootmass.harvest.ratio)] = c("FRratio","IRratio","CRratio","BRratio","FRratio_SE","IRratio_SE","CRratio_SE","BRratio_SE")
+rootmass.harvest.ratio.melt = melt(rootmass.harvest.ratio[,c("Date","FRratio","IRratio","CRratio","BRratio")], id.vars = "Date")
+rootmass.harvest.ratio.melt$biomass = as.factor("Belowground")
+rootmass.harvest.ratio.melt$SE = melt(rootmass.harvest.ratio[,c("Date","FRratio_SE","IRratio_SE","CRratio_SE","BRratio_SE")], id.vars = "Date")[,3]
+
+#----------------------------------------------------------------------------------------------------------------
+# Calculate the ratios of aboveground biomass
+treeMass$LMratio = treeMass$leafMass / treeMass$totMass
+treeMass$BMratio = treeMass$branchMass / treeMass$totMass
+treeMass$SMratio = treeMass$boleMass / treeMass$totMass
+treeMass$Treatment <- as.factor(paste(treeMass$T_treatment, treeMass$chamber_type))
+
+# Test for any significant difference between the treatment groups
+summary(aov(LMratio ~ Treatment, data = treeMass)) # NO, there is no significant difference accross the treatments
+summary(aov(BMratio ~ Treatment, data = treeMass)) # NO, there is no significant difference accross the treatments
+summary(aov(SMratio ~ Treatment, data = treeMass)) # NO, there is no significant difference accross the treatments
+
+
+treeMass.ratio = summaryBy(LMratio+BMratio+SMratio ~ Date, data=treeMass, FUN=c(mean,standard.error))
+names(treeMass.ratio)[2:ncol(treeMass.ratio)] = c("LMratio","BMratio","SMratio","LMratio_SE","BMratio_SE","SMratio_SE")
+#----------------------------------------------------------------------------------------------------------------
+# Plot various biomass ratios including different root types partitioning
+treeMass.ratio.melt = melt(treeMass.ratio[,c("Date","LMratio","BMratio","SMratio")], id.vars = "Date")
+treeMass.ratio.melt$biomass = as.factor("Aboveground")
+treeMass.ratio.melt$SE = melt(treeMass.ratio[,c("Date","LMratio_SE","BMratio_SE","SMratio_SE")], id.vars = "Date")[,3]
+
+treeMass.ratio.melt = rbind(treeMass.ratio.melt, rootmass.harvest.ratio.melt)
+
+font.size = 10
+plot = list() 
+pd <- position_dodge(2) # move the overlapped errorbars horizontally
+plot = ggplot(treeMass.ratio.melt, aes(x=Date, y=value, group = interaction(variable,biomass), colour=variable, shape=biomass)) + 
+  geom_point(position=pd, size=2) +
+  geom_errorbar(position=pd, aes(ymin=value-SE, ymax=value+SE), colour="grey", width=1) +
+  geom_line(position=pd,data = treeMass.ratio.melt, aes(x = Date, y = value, group = variable, colour=variable)) + 
+  ylab("Biomass ratio") + xlab("") +
+  scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(Rd$Date)-2, max(Rd$Date)+2)) +
+  labs(colour="Biomass types", shape="") +
+  theme_bw() +
+  theme(legend.title = element_text(colour="black", size=font.size)) +
+  theme(legend.text = element_text(colour="black", size=font.size)) +
+  theme(legend.position = c(0.2,0.87), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.key = element_blank()) +
+  theme(text = element_text(size=font.size)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+
+pdf("output/4.Biomass_ratio.pdf")
+plot
+dev.off()
 
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
