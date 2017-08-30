@@ -12,7 +12,7 @@ rm(list=ls())
 #- Load required libraries. There are quite a few (>20), including some non-standard functions that
 #    are not on CRAN. This script will check for required libraries and install any that are missing.
 source("R/load_packages_WTC3.R")
-# source("R/loadLibraries_WTC3.R")
+source("R/loadLibraries_WTC3.R")
 
 #- load the custom analysis and plotting functions that do all of the actual work
 source("R/functions_WTC3.R")
@@ -930,12 +930,13 @@ branch.resp$Treatment <- as.factor(paste(branch.resp$T_treatment, branch.resp$ch
 # Test for any significant difference between the treatment groups
 boxplot(branch.resp$Rbranch ~ branch.resp$Treatment, xlab="Treatment", ylab=(expression("Branch wood respiration"~"(nmol CO2 "*g^"-1"*" "*s^"-1"*")")))
 
-summary(aov(Rbranch ~ Treatment, data = branch.resp)) # YES, there is significant difference accross the treatments
-t.test(branch.resp$Rbranch ~ branch.resp$T_treatment) # YES, there is significant difference accross temperatures
-t.test(branch.resp$Rbranch ~ branch.resp$chamber_type) # NO, there is no significant difference accross drought/watered treatments
+summary(aov(Rbranch ~ T_treatment * chamber_type, data = branch.resp)) # YES, there is significant difference only accross the temperature treatments
+# summary(aov(Rbranch ~ Treatment, data = branch.resp)) # YES, there is significant difference accross the treatments
+# t.test(branch.resp$Rbranch ~ branch.resp$T_treatment) # YES, there is significant difference accross temperatures
+# t.test(branch.resp$Rbranch ~ branch.resp$chamber_type) # NO, there is no significant difference accross drought/watered treatments
 
 ############ So how to group the treatments????????
-rd15.root <- summaryBy(Rbranch ~ T_treatment+chamber_type, data=branch.resp, FUN=c(mean))
+rd15.root <- summaryBy(Rbranch ~ T_treatment, data=branch.resp, FUN=c(mean))
 names(rd15.root)[ncol(rd15.root)] = c("rd15.coarseroot")
 rd15.root$rd15.coarseroot = rd15.root$rd15.coarseroot * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
 # rd15.coarseroot$rd15.coarseroot_SE = rd15.coarseroot$rd15.coarseroot_SE * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
@@ -947,16 +948,18 @@ bole.resp$Treatment <- as.factor(paste(bole.resp$T_treatment, bole.resp$chamber_
 
 # Test for any significant difference between the treatment groups
 boxplot(bole.resp$R_stem_nmol ~ bole.resp$Treatment, xlab="Treatment", ylab=(expression("Bole wood respiration"~"(nmol CO2 "*g^"-1"*" "*s^"-1"*")")))
-summary(aov(R_stem_nmol ~ Treatment, data = bole.resp)) # NO, there is no significant difference accross the treatments
-t.test(bole.resp$R_stem_nmol ~ bole.resp$T_treatment) # NO, there is no significant difference accross tepmeratures
-t.test(bole.resp$R_stem_nmol ~ bole.resp$chamber_type) # NO, there is no significant difference accross drought/watered treatments
+
+summary(aov(R_stem_nmol ~ T_treatment * chamber_type, data = bole.resp)) # NO, there is no significant difference accross the treatments
+# summary(aov(R_stem_nmol ~ Treatment, data = bole.resp)) # NO, there is no significant difference accross the treatments
+# t.test(bole.resp$R_stem_nmol ~ bole.resp$T_treatment) # NO, there is no significant difference accross tepmeratures
+# t.test(bole.resp$R_stem_nmol ~ bole.resp$chamber_type) # NO, there is no significant difference accross drought/watered treatments
 
 rd15.root$rd15.boleroot = mean(bole.resp$R_stem_nmol)
 rd15.root$rd15.boleroot = rd15.root$rd15.boleroot * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
 
 # Fine root respiration rates (Constant)
-# Fine root respiration rate = 12 nmolCO2 g-1 s-1 (Ref: Drake et al. 2017: GREAT exp data)
-rd25.fineroot = 12 * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+# Fine root respiration rate = 10 nmolCO2 g-1 s-1 (Ref: Drake et al. 2017: GREAT exp data; Mark's Email)
+rd25.fineroot = 10 * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
 rd15.root$rd15.fineroot = rd25.fineroot * q25_drake^((15-25)/10)
 
 # Intermediate root respiration rates
@@ -982,39 +985,39 @@ met.data$time <- format(met.data$DateTime, format='%H:%M:%S')
 # subset by Date range of experiment
 met.data <- subset(met.data[, c("chamber","Date","time","SoilTemp")], Date  >= "2013-09-17" & Date  <= "2014-05-26")
 met.data$chamber = as.factor(met.data$chamber)
-met.data = merge(met.data, unique(height.dia[,c("chamber","T_treatment","chamber_type")]), by="chamber")
+met.data = merge(met.data, unique(height.dia[,c("chamber","T_treatment")]), by="chamber")
 
 # need to calculate Rdark through time using rdarkq10 equation by treatment
-met.data <- merge(met.data, rd15.root, by=c("T_treatment","chamber_type"))
+met.data <- merge(met.data, rd15.root, by=c("T_treatment"))
 
 met.data[,c("Rd.fineroot","Rd.intermediateroot","Rd.coarseroot","Rd.boleroot")] <- 
   with(met.data, met.data[,c("rd15.fineroot","rd15.intermediateroot","rd15.coarseroot","rd15.boleroot")] * 
          q25_drake^((SoilTemp-15)/10)) # unit (gC per gC root per day)
 
-Rd <- summaryBy(Rd.fineroot+Rd.intermediateroot+Rd.coarseroot+Rd.boleroot ~ Date+T_treatment+chamber_type, data=met.data, FUN=mean, keep.names=TRUE , na.rm=TRUE) # Sum of all same day Rd
+Rd <- summaryBy(Rd.fineroot+Rd.intermediateroot+Rd.coarseroot+Rd.boleroot ~ Date+T_treatment, data=met.data, FUN=mean, keep.names=TRUE , na.rm=TRUE) # Sum of all same day Rd
 # colSums(is.na(Rd)) # Check any NA values for Rd
 
 write.csv(Rd, "processed_data/Rd.csv", row.names=FALSE) # unit: gC per gC plant per day
 
 #----------------------------------------------------------------------------------------------------------------
 # Plot various root respiration data
-Rd.melt <- melt(Rd, id.vars = c("Date","T_treatment","chamber_type"))
+Rd.melt <- melt(Rd, id.vars = c("Date","T_treatment"))
 i = 0
 font.size = 15
 plot = list() 
 meas = as.factor(c("Rd.fineroot","Rd.intermediateroot","Rd.coarseroot","Rd.boleroot"))
 title = as.character(c("A","B","C","D"))
-pd <- position_dodge(2) # move the overlapped errorbars horizontally
+pd <- position_dodge(0) # move the overlapped errorbars horizontally
 for (p in 1:length(meas)) {
   Rd.melt.sub = subset(Rd.melt,variable %in% meas[p])
   
   i = i + 1
-  plot[[i]] = ggplot(Rd.melt.sub, aes(x=Date, y=value, group = interaction(T_treatment,chamber_type), colour=T_treatment, shape=chamber_type)) + 
+  plot[[i]] = ggplot(Rd.melt.sub, aes(x=Date, y=value, group = T_treatment, colour=T_treatment)) + 
     geom_point(position=pd) +
-    geom_line(position=pd,data = Rd.melt.sub, aes(x = Date, y = value, group = interaction(T_treatment,chamber_type), colour=T_treatment, linetype=chamber_type)) + 
+    geom_line(position=pd,data = Rd.melt.sub, aes(x = Date, y = value, group = T_treatment, colour=T_treatment)) + 
     ylab(expression(R[d(fineroot)]~"(g C "*g^"-1"*" C "*d^"-1"*")")) + xlab("") +
     scale_x_date(date_labels="%b %y",date_breaks  ="1 month",limits = c(min(Rd$Date)-2, max(Rd$Date)+2)) +
-    labs(colour="Temperature", shape="Chamber type", linetype="Chamber type") +
+    labs(colour="Temperature") +
     scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
     theme_bw() +
     theme(legend.title = element_text(colour="black", size=font.size)) +
@@ -1116,6 +1119,78 @@ plot = ggplot(treeMass.ratio.melt, aes(x=Date, y=value, group = interaction(vari
 pdf("output/4.Biomass_ratio.pdf")
 plot
 dev.off()
+
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+
+
+
+#----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+#- process leaf-scale R vs. T data to find q10 value for WTC3
+rvt <- read.csv("data/WTC_TEMP_CM_GX-RdarkVsT_20140207-20140423_L1.csv")
+rvt$Date <- as.Date(rvt$Date)
+rvt.sub <- subset(rvt,Date==as.Date("2014-02-07")) #- just pull out the data measured prior to the drought
+
+rvt.45 <- subset(rvt.sub, Tleaf > 18 & Tleaf<=40)
+rvt.45$lnRmass <- log(rvt.45$Rmass)
+rvt.45$varT <- (rvt.45$Tleaf-25)/10
+
+rvt.45$Tleaf_bin <- cut(rvt.45$Tleaf,breaks=seq(from=18,to=40,length=25))
+rvt.45$Tleaf_bin_mid <- sapply(strsplit(gsub("^\\W|\\W$", "", rvt.45$Tleaf_bin), ","), function(x)sum(as.numeric(x))/2) 
+rvt.treat.bin <- summaryBy(Rmass+lnRmass+varT~date+T_treatment+Water_treatment+Tleaf_bin_mid,data=rvt.45,keep.names=T,FUN=mean)
+
+#- fit arrhenious. 
+lmRleaf <- lm(lnRmass~varT+T_treatment+Water_treatment,data=rvt.treat.bin)
+summary(lmRleaf)
+coef(lmRleaf) 
+# q10_amb_wet <- unname(exp(coef(lmRleaf)[2]))
+# q10_ele_wet <- unname(exp(coef(lmRleaf)[2]+coef(lmRleaf)[3]))
+# q10_amb_dry <- unname(exp(coef(lmRleaf)[2]+coef(lmRleaf)[4]))
+# q10_ele_dry <- unname(exp(coef(lmRleaf)[2]+coef(lmRleaf)[3]+coef(lmRleaf)[4]))
+
+# No significant difference for drought/control treatments, so only consider temperature treatment effect
+lmRleaf_amb <- lm(lnRmass~varT,data=subset(rvt.treat.bin,T_treatment %in% as.factor("ambient")))
+q10_amb <- unname(exp(coef(lmRleaf_amb)[2]))
+rd25_amb = unname(exp(coef(lmRleaf_amb)[1]))
+lmRleaf_ele <- lm(lnRmass~varT,data=subset(rvt.treat.bin,T_treatment %in% as.factor("elevated")))
+q10_ele <- unname(exp(coef(lmRleaf_ele)[2]))
+rd25_ele = unname(exp(coef(lmRleaf_ele)[1]))
+
+# get model predictions of R across all temperatures
+xvals_Rleaf <- seq(18,40, length=101)
+predRleaf_amb <- exp(log(rd25_amb) + (log(q10_amb) * (xvals_Rleaf-25)/10))
+predRleaf_ele <- exp(log(rd25_ele) + (log(q10_ele) * (xvals_Rleaf-25)/10))
+
+
+#----------------------------------------------------------------------------------------------------------------
+#- plot R vs. T
+rvt.treat <- summaryBy(Rmass~Date+T_treatment+Tleaf_bin_mid,data=rvt.treat.bin,keep.names=F,FUN=c(mean,standard.error))
+par(mfrow=c(1,1),cex.lab=1.5,mar=c(2,7,1,2),oma=c(4,1,0,0),las=1)
+xlims=c(15,42)
+
+# #- plot MASS BASED leaf R over T for the first date of high resolution T-response curves
+plotBy(Rmass.mean~Tleaf_bin_mid|T_treatment,data=rvt.treat,xaxt="n",yaxt="n",
+       ylab=expression(R[leaf]~(mu*mol~CO[2]~m^-2~s^-1)),col=c("black","red"),pch=1,
+       xlim=xlims,type="p",lwd=3,cex=1,cex.lab=1.6,legend=F,
+       panel.first=adderrorbars(x=rvt.treat$Tleaf_bin_mid,y=rvt.treat$Rmass.mean,SE=rvt.treat$Rmass.standard.error,direction="updown"))
+magaxis(side=c(1,2,3,4),labels=c(1,1,0,1))
+title(xlab=expression(Temperature~(degree*C)),xpd=NA)
+lines(x=xvals_Rleaf,y=predRleaf_amb,col="black",lwd=2)
+lines(x=xvals_Rleaf,y=predRleaf_ele,col="red",lwd=2)
+legend("topleft",legend=unique(rvt.treat$T_treatment),col=c('black','red'),lty=1,bty="n",cex=0.8,pt.cex=1.2)
+
+dev.copy2pdf(file="output/5.Rdark_vs_T.pdf")
+
+# #- plot raw T-response curves
+# plotBy(Rmass~Tleaf|chamber,data=subset(rvt.45,T_treatment %in% as.factor("ambient")),type="p",xlim=xlims,ylim=c(0,30),pch=20,size=0.2,cex=1.6,cex.lab=1.6,xaxt="n",yaxt="n",
+#        ylab=expression(atop(R[canopy],(mu*mol~CO[2]~s^-1))),xlab="",legend=F)
+#        # panel.first=adderrorbars(x=fits.trt$Tair.mean,y=fits.trt$Rcanopy_umol.mean,SE=fits.trt$Rcanopy_umol.standard.error,direction="updown"))
+# lines(x=xvals_Rleaf,y=predRleafA,col="black",lwd=2)
+# lines(x=xvals_Rleaf,y=predRleafE,col="red",lwd=2)
+# legend("topleft",legend=unique(rvt.treat$T_treatment),col=c('black','red'),lty=1,bty="n",cex=0.8,pt.cex=1.2)
+# magaxis(side=c(1,2,3,4),labels=c(1,1,0,1))
+
 
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------

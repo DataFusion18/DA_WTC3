@@ -168,7 +168,8 @@ for(i in 1:length(chambers)) {
   height.dia.sub$X15 = eq.D(height.dia.sub$X65)
   height.dia.sub = subset(height.dia.sub, DateTime >= as.Date("2013-09-14") & DateTime <= as.Date("2014-05-27"))
   height.dia.sub = height.dia.sub[!is.na(height.dia.sub$X65),]
-  keeps <- c("chamber", "DateTime", "T_treatment", "Water_treatment", "X15", "Plant_height")
+  # keeps <- c("chamber", "DateTime", "T_treatment", "Water_treatment", "X15", "Plant_height")
+  keeps <- c("chamber", "DateTime", "T_treatment", "Water_treatment", "X65", "Plant_height")
   height.dia.sub = height.dia.sub[ , keeps, drop = FALSE]
   names(height.dia.sub) <- c("chamber","Date","T_treatment","W_treatment","diameter","height")
   height.dia.sub$T_treatment = as.character(height.dia.sub$T_treatment)
@@ -211,13 +212,46 @@ melted.height.dia.error = melt(height.dia.final[,c("diameter_SE","height_SE","Da
 # melted.height.dia.error = melt(height.dia.final[,c("diameter_SE","height_SE","Date","T_treatment","case")], id.vars=c("Date","T_treatment","case"))
 melted.height.dia.final$SE = melted.height.dia.error$value
 
+# add.points = subset(melted.height.dia.final,Date %in% as.Date("2014-02-04") & W_treatment %in% as.factor("control"))
+add.points = subset(melted.height.dia.final, Date <= as.Date("2014-02-04") & W_treatment %in% as.factor("control"))
+add.points$W_treatment = as.factor("drydown")
+melted.height.dia.final = rbind(melted.height.dia.final, add.points)
+
+font.size = 12
+plot = list() 
+pd <- position_dodge(0) # move the overlapped errorbars horizontally
+cbPalette = c("black", "green3", "red", "magenta", "blue")
+melted.height.dia.final.trait = subset(melted.height.dia.final,variable %in% as.factor("diameter") & T_treatment %in% as.factor("elevated"))
+
+plot = ggplot(melted.height.dia.final.trait, aes(x=Date, y=value, group = W_treatment, colour=W_treatment)) + 
+  geom_point(position=pd) +
+  geom_line(position=pd,data = melted.height.dia.final.trait, aes(x = Date, y = value, group = W_treatment, colour=W_treatment)) +
+  ylab(paste(as.character(meas[p]),"(mm)")) +
+  xlab("Month") +
+  scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
+  labs(colour="Treatments") +
+  scale_colour_manual(breaks=c("all","control","watered_treat","drydown","drought_treat"), labels=c("All Warm chambers (n=6)","Wet (n=6:predrought to n=3:postdrought)","Wet (n=3)",
+                                                                                                    "Dry (n=6:predrought to n=3:postdrought)","Dry (n=3)"),values=cbPalette) +
+  ggtitle(" Elevated temperature treatments") +
+  theme_bw() + theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.title = element_text(colour="black", size=font.size)) +
+  theme(legend.text = element_text(colour="black", size = font.size-2)) +
+  theme(legend.position = c(0.35,0.88)) + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.key = element_blank()) +
+  theme(text = element_text(size=font.size)) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+
+dev.copy2pdf(file="output/6.Diameter_elevated_predrought_difference.pdf")
+
 i = 0
 font.size = 12
 plots = list() 
 meas = as.factor(c("diameter","height"))
 error = as.factor(c("diameter_SE","height_SE"))
 temp = as.factor(c("ambient","elevated"))
-pd <- position_dodge(9) # move the overlapped errorbars horizontally
+pd <- position_dodge(0) # move the overlapped errorbars horizontally
 for (p in 1:length(meas)) {
   for (q in 1:length(temp)) {
     melted.height.dia.final.trait = subset(melted.height.dia.final,variable %in% meas[p] & T_treatment %in% temp[q])
@@ -233,13 +267,13 @@ for (p in 1:length(meas)) {
       xlab("Month") +
       scale_x_date(date_labels="%b %y",date_breaks  ="1 month") +
       labs(colour="Treatments") +
-      # scale_color_manual(labels = c("ambient", "elevated"), values = c("blue", "red")) +
+      # scale_colour_manual(breaks=c("all","control","watered_treat","drydown","drought_treat"), labels=c("All Warm chambers (n=6)","Wet (n=6:predrought to n=3:postdrought)","Wet (n=3)",
+      #                                                "Dry (n=6:predrought to n=3:postdrought)","Dry (n=3)"),values=cbPalette) +
       ggtitle(paste(as.character(temp[q]), "temperature")) +
-      # ggtitle(paste(title[p],"- Case",iteration,":",as.character(var[p]),"(5L pot -> Free)")) +
-      theme_bw() +
+      theme_bw() + theme(plot.title = element_text(hjust = 0.5)) +
       theme(legend.title = element_text(colour="black", size=font.size)) +
-      theme(legend.text = element_text(colour="black", size = font.size)) +
-      theme(legend.position = c(0.8,0.2)) + theme(legend.key.height=unit(0.8,"line")) +
+      theme(legend.text = element_text(colour="black", size = font.size-2)) +
+      theme(legend.position = c(0.35,0.88)) + theme(legend.key.height=unit(0.8,"line")) +
       theme(legend.key = element_blank()) +
       theme(text = element_text(size=font.size)) +
       theme(axis.title.x = element_blank()) +
@@ -260,7 +294,7 @@ for (r in 1:length(meas)) {
   i = i + 1
   plots[[i]] = ggplot(melted.height.dia.final.trait, aes(x=Date, y=value, group = interaction(T_treatment,W_treatment), colour=T_treatment, shape=W_treatment)) + 
     geom_point(position=pd) +
-    geom_errorbar(position=pd,aes(ymin=value-SE, ymax=value+SE), colour="grey", width=2) +
+    # geom_errorbar(position=pd,aes(ymin=value-SE, ymax=value+SE), colour="grey", width=2) +
     geom_line(position=pd,data = melted.height.dia.final.trait, aes(x = Date, y = value, group = interaction(T_treatment,W_treatment), colour=T_treatment, linetype=W_treatment)) +
     ylab(paste(as.character(meas[r]),"(mm)")) +
     xlab("Month") +
