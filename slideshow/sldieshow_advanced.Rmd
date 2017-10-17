@@ -1,0 +1,180 @@
+---
+title: "Advanced slideshow with R markdown"
+author: "Court Campany"
+date: "16 February 2017"
+output: 
+  ioslides_presentation:
+    css: custom.css
+    logo: images/hielogo.png
+    widescreen: true
+    smaller: true
+    
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Should I learn a little css? Yes!!!
+
+- Endless levels of customization by tweaking, creating, inserting your own CSS
+
+<br />
+
+- CSS is a style sheet language used for describing the presentation of a document written in a markup language
+
+<br />
+
+- the good thing is that the most awesome web resource already exists...
+  + https://www.w3schools.com/
+  + simple explanations for everything you want to know
+
+## Custom CSS
+<br />
+<br />
+
+- What you cant see is the CSS that styles/formats everything create
+- You have the option to code your own styles
+- Save these in a custom.css file
+- Anything you customize will be used over the defaults
+- Set this up in your folder and the YAML  
+
+http://rmarkdown.rstudio.com/ioslides_presentation_format.html#overview
+
+## Custom CSS: Slide color
+<br />
+<br />
+
+- The default background in awful, but change it to whatever color you want
+
+<br />
+
+slides > slide.backdrop {
+  background: white;
+}
+
+<br />
+
+- You can customize each individual slide but that gets messy
+
+## Custom CSS: Create a pretty horizontal rule
+<hr>
+<br />
+
+- The default horizontal rule is too thin 
+
+<br />
+
+hr {
+height: 4px;
+margin-left: auto;
+margin-right: auto;
+background-color:#cc2904;
+color:#cc2904 ;
+border: 0 none;
+}
+
+<br />
+
+- Here I set thickness, alignment, color, etc.
+
+## Custom CSS: Text styles
+<hr>
+<br />
+
+- Very simple to change text color (default is too light)
+
+<br />
+
+slides > slide {
+
+  color: black;
+
+}
+
+<br />
+
+- You can custom colors, alignment, size, fonts of text in the same way
+- <strong>Everything is on w3schools.com !!</strong>
+
+## Custom CSS: Setup your title slide
+<hr>
+<br />
+
+The title slide needs a lot of work.  Browse the custom.css file to see how I have formatted it to something I like
+
+<br />
+
+- gdbar is the rectangular logo to place the logo image in
+- Text colors are customized, including h1 and h2, for the title and subtext
+- Background color of title slide changed
+- Text font changed
+
+## Placing content on slide
+<hr>
+<br />
+
+- There are some default alternate slide designs that you can utilize
+  + 
+- You can also customize single slides
+- To do this you need to start a new slide with 3 dashes(---) instead of hashtags
+  + I tend not to do this, but Ill give an example
+
+## Setting up a two column slides
+<hr>
+<br />
+<br />
+
+<div style="float: right; width: 60%;">
+
+- There are several ways to do this
+    + I prefer using HTML <div> tags to define a container for my text
+    + This gives me control over the container size
+    + This is create for placing text + images together
+    + Longer sentences may need a bigger container, making text wrapping prettier
+
+<IMG STYLE="position:absolute; TOP:225px; LEFT:75px; WIDTH:200px; HEIGHT:300px" SRC="images/tower.jpg">
+
+## Interactive Plots
+
+```{r eruptions}
+inputPanel(
+  selectInput("n_breaks", label = "Number of bins:",
+              choices = c(10, 20, 35, 50), selected = 20),
+  
+  sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+              min = 0.2, max = 2, value = 1, step = 0.2)
+)
+
+renderPlot({
+  hist(faithful$eruptions, probability = TRUE, breaks = as.numeric(input$n_breaks),
+       xlab = "Duration (minutes)", main = "Geyser eruption duration")
+  
+  dens <- density(faithful$eruptions, adjust = input$bw_adjust)
+  lines(dens, col = "blue")
+})
+```
+
+## Inline Shiny App
+
+```{r phones}
+shinyApp(
+  
+  ui = fluidPage(
+    selectInput("region", "Region:", 
+                choices = colnames(WorldPhones)),
+    plotOutput("phonePlot")
+  ),
+  
+  server = function(input, output) {
+    output$phonePlot <- renderPlot({
+      barplot(WorldPhones[,input$region]*1000, 
+              ylab = "Number of Telephones", xlab = "Year")
+    })
+  },
+  
+  options = list(height = 500)
+)
+```
+

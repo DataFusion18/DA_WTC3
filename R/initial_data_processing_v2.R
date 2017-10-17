@@ -6,16 +6,16 @@
 ###### R script to import and process the raw WTC3 experiment data 
 # to model the carbon pools and fluxes using DA
 
-# Clear the workspace (if needed)
-rm(list=ls())
-
-#- Load required libraries. There are quite a few (>20), including some non-standard functions that
-#    are not on CRAN. This script will check for required libraries and install any that are missing.
-source("R/load_packages_WTC3.R")
-source("R/loadLibraries_WTC3.R")
-
-#- load the custom analysis and plotting functions that do all of the actual work
-source("R/functions_WTC3.R")
+# # Clear the workspace (if needed)
+# rm(list=ls())
+# 
+# #- Load required libraries. There are quite a few (>20), including some non-standard functions that
+# #    are not on CRAN. This script will check for required libraries and install any that are missing.
+# source("R/load_packages_WTC3.R")
+# source("R/loadLibraries_WTC3.R")
+# 
+# #- load the custom analysis and plotting functions that do all of the actual work
+# source("R/functions_WTC3.R")
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
@@ -25,9 +25,11 @@ source("R/functions_WTC3.R")
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------
+c1 = 0.48 # unit conversion from gDM to gC: 1 gDM = 0.48 gC
+
 #- Script to read and setup a model for GPP, Ra (aboveground respiration) and leaf area
 # read the hourly flux data
-data.hr <- read.csv("data/WTC_TEMP_CM_WTCFLUX_20130914-20140526_L2_V2.csv")
+data.hr <- read.csv("raw_data/WTC_TEMP_CM_WTCFLUX_20130914-20140526_L2_V2.csv")
 data.hr$DateTime <- as.POSIXct(data.hr$DateTime,format="%Y-%m-%d %H:%M:%S",tz="GMT")
 data.hr$Date <- as.Date(data.hr$DateTime)
 
@@ -46,7 +48,7 @@ names(data)[4:9] = c("GPP","Ra","LA","GPP_SE","Ra_SE","LA_SE")
 data = subset(data, Date >= as.Date("2013-09-17") & Date <= as.Date("2014-05-27"))
 
 # write csv file with daily inputs of GPP, Ra, LA
-write.csv(data, file = "processed_data/data_GPP_Ra_LA.csv", row.names = FALSE)
+write.csv(data, file = "processed_raw_data/data_GPP_Ra_LA.csv", row.names = FALSE)
 
 #- plot GPP, Ra, and LA data over time for various treatments
 i = 0
@@ -196,9 +198,9 @@ dev.off()
 #----------------------------------------------------------------------------------------------------------------
 # Script to read and plot stem height and diameter for various treatment cases 
 # Read data form WTC3 experiment
-height.dia.raw <- read.csv("data/WTC_TEMP_CM_TREE-HEIGHT-DIAMETER_20121120-20140527_L1_V2.CSV") # units: Height = cm, dia = mm
+height.dia.raw <- read.csv("raw_data/WTC_TEMP_CM_TREE-HEIGHT-DIAMETER_20121120-20140527_L1_V2.CSV") # units: Height = cm, dia = mm
 height.dia.raw$DateTime = as.Date(height.dia.raw$DateTime)
-flux <- read.csv("data/WTC_TEMP_CM_WTCFLUX_20130914-20140526_L2_V2.csv")
+flux <- read.csv("raw_data/WTC_TEMP_CM_WTCFLUX_20130914-20140526_L2_V2.csv")
 chambers = unique(flux$chamber)
 
 height.dia = data.frame(chamber = rep(chambers, each = length(unique(height.dia.raw$DateTime))),
@@ -368,12 +370,12 @@ harvest.data.pot <- merge(height.dia.pot, harvest.data.pot, by=c("pot","plot","v
 keeps <- c("rootmass", "diameter", "height","volume")
 harvest.data.pot = harvest.data.pot[ , keeps, drop = FALSE]
 data.pot = rbind(data.pot, harvest.data.pot)
-# data.pot[,"rootmass"] = data.pot[,"rootmass"] * 0.48 # unit conversion: gDM to gC 
+# data.pot[,"rootmass"] = data.pot[,"rootmass"] * c1 # unit conversion: gDM to gC 
 data.free.pot = subset(data.pot, volume %in% 1000)
 data.free.pot = data.free.pot[,-4]
 
 # Read harvest rootmass data form WTC3 experiment
-rootmass.harvest = read.csv("data/WTC_TEMP_CM_HARVEST-ROOTS_20140529-20140606_L1_v1.csv")
+rootmass.harvest = read.csv("raw_data/WTC_TEMP_CM_HARVEST-ROOTS_20140529-20140606_L1_v1.csv")
 # rootmass.harvest$chamber_type = as.factor( ifelse(rootmass.harvest$chamber %in% drought.chamb, "drought", "watered") )
 rootmass.harvest$Date = as.Date("2014-05-26")
 rootmass.harvest = merge(unique(height.dia[,c("chamber","T_treatment","chamber_type")]), rootmass.harvest, by=c("chamber"))
@@ -438,12 +440,12 @@ names(rootmass.harvest.mean)[4:5] = c("RM","RM_SE")
 # # combine the rootmass data with the biomass
 # rootmass = merge(height.dia.initial[,c("Date","T_treatment","chamber_type","RM","RM_SE")], rootmass.harvest, all = TRUE)
 # biomass = merge(biomass, rootmass, all = TRUE)
-# biomass$RM = biomass$RM * 0.48 # unit conversion from gDM to gC
-# biomass$RM_SE = biomass$RM_SE * 0.48 # unit conversion from gDM to gC
+# biomass$RM = biomass$RM * c1 # unit conversion from gDM to gC
+# biomass$RM_SE = biomass$RM_SE * c1 # unit conversion from gDM to gC
 
 rootmass = merge(height.dia.initial[,c("Date","T_treatment","chamber_type","RM","RM_SE")], rootmass.harvest.mean, all = TRUE)
-rootmass$RM = rootmass$RM * 0.48 # unit conversion from gDM to gC
-rootmass$RM_SE = rootmass$RM_SE * 0.48 # unit conversion from gDM to gC
+rootmass$RM = rootmass$RM * c1 # unit conversion from gDM to gC
+rootmass$RM_SE = rootmass$RM_SE * c1 # unit conversion from gDM to gC
 # data.with.RM = merge(data, rootmass, all = TRUE)
 
 #-----------------------------------------------------------------------------------------
@@ -453,7 +455,7 @@ rootmass$RM_SE = rootmass$RM_SE * 0.48 # unit conversion from gDM to gC
 # #--------------------------------------------------------------------------------------------------
 # #----------------------------------------------------------------------------------------------------------------
 # # Script to estimate leaf mass
-# harvest.wtc = read.csv("data/WTC_TEMP_CM_HARVEST-CANOPY_20140526-20140528_L1_v1.csv")
+# harvest.wtc = read.csv("raw_data/WTC_TEMP_CM_HARVEST-CANOPY_20140526-20140528_L1_v1.csv")
 # keeps <- c("chamber", "T_treatment", "SLA", "BranchDM", "StemDM", "TotalLeafDM")
 # harvest.wtc = harvest.wtc[ , keeps, drop = FALSE]
 # 
@@ -480,7 +482,7 @@ rootmass$RM_SE = rootmass$RM_SE * 0.48 # unit conversion from gDM to gC
 # harvest.wtc.mean$experiment = as.factor("Harvest")
 # 
 # # read LMA values
-# leaf.trait = read.csv("data/WTC_TEMP_CM_TDLSUNSHADE-TRAIT_20131026-20140421.csv")
+# leaf.trait = read.csv("raw_data/WTC_TEMP_CM_TDLSUNSHADE-TRAIT_20131026-20140421.csv")
 # names(leaf.trait)[4] = "ch"; names(leaf.trait)[6] = "T_treatment"
 # leaf.trait = merge(data.frame(ch=unique(as.factor(leaf.trait$ch)), chamber= as.factor(harvest.wtc$chamber)), leaf.trait, by="ch", all=TRUE)
 # leaf.trait$chamber_type = as.factor( ifelse(leaf.trait$chamber %in% drought.chamb, "drought", "watered") )
@@ -541,7 +543,7 @@ rootmass$RM_SE = rootmass$RM_SE * 0.48 # unit conversion from gDM to gC
 # dev.off()
 # 
 # # Merge all LMA valuse from difernt experiments (Mike/Court/Harvest)
-# lma.mike = read.csv("data/WTC_TEMP_CM_GX-ASAT_20130515-20140402_L2.csv")
+# lma.mike = read.csv("raw_data/WTC_TEMP_CM_GX-ASAT_20130515-20140402_L2.csv")
 # keeps <- c("date","chamber","leaf","T_treatment","lma")
 # lma.mike = lma.mike[ , keeps, drop = FALSE]
 # lma.mike = unique(lma.mike)
@@ -596,10 +598,10 @@ rootmass$RM_SE = rootmass$RM_SE * 0.48 # unit conversion from gDM to gC
 # # calculate daily leaf mass
 # data.with.LM = merge(data.with.RM, leaf.trait.final, by=c("T_treatment", "chamber_type"), all=TRUE)
 # data.with.LM$LM = (data.with.LM$LA * data.with.LM$LMA) 
-# data.with.LM$LM = data.with.LM$LM * 0.48 # unit conversion from gDM to gC
+# data.with.LM$LM = data.with.LM$LM * c1 # unit conversion from gDM to gC
 # # data.with.LM$LM_SE = (((data.with.LM$LA_SE * (3)^0.5)^2 * (data.with.LM$LMA_SE * (3)^0.5)^2)/2  )^0.5
 # data.with.LM$LM_SE = (((data.with.LM$LA_SE/data.with.LM$LA)^2 + (data.with.LM$LMA_SE/data.with.LM$LMA)^2 )^0.5) * data.with.LM$LM
-# data.with.LM$LM_SE = data.with.LM$LM_SE * 0.48 # unit conversion from gDM to gC
+# data.with.LM$LM_SE = data.with.LM$LM_SE * c1 # unit conversion from gDM to gC
 # 
 # # Daily LM plot with SE
 # plots = list() 
@@ -645,7 +647,7 @@ treeMass$woodMass = treeMass$branchMass + treeMass$boleMass
 treeMass$chamber_type = as.factor( ifelse(treeMass$chamber %in% drought.chamb, "drought", "watered") )
 treeMass.sum = summaryBy(leafMass+woodMass ~ Date+T_treatment+chamber_type, data=treeMass, FUN=c(mean,standard.error))
 names(treeMass.sum)[4:7] = c("LM","WM","LM_SE","WM_SE")
-treeMass.sum[,c(4:7)] = treeMass.sum[,c(4:7)] * 0.48 # unit conversion from gDM to gC
+treeMass.sum[,c(4:7)] = treeMass.sum[,c(4:7)] * c1 # unit conversion from gDM to gC
 
 data.biomass = merge(rootmass, treeMass.sum, by = c("Date", "T_treatment", "chamber_type"), all=TRUE)
 
@@ -737,7 +739,7 @@ plots[[1]] = ggplot(data.biomass, aes(x=Date, y=LM, group = interaction(T_treatm
 
 #----------------------------------------------------------------------------------------------------------------
 # Script to setup a model for the leaf mass
-litterfall = read.csv("data/WTC_TEMP_CM_LEAFLITTER_20130913-20140528_L1.csv")
+litterfall = read.csv("raw_data/WTC_TEMP_CM_LEAFLITTER_20130913-20140528_L1.csv")
 litterfall$startDate = as.Date(litterfall$startDate)
 litterfall$collectionDate = as.Date(litterfall$collectionDate)
 litterfall$Date <- (litterfall$startDate + ((litterfall$collectionDate - litterfall$startDate) / 2))
@@ -765,8 +767,8 @@ litterfall.initial = data.frame(Date = rep(as.Date("2013-09-17"), 4),
                                 litter = rep(0,4),
                                 litter_SE = rep(0,4))
 litterfall.cum.melt = rbind(litterfall.initial, litterfall.cum.melt)
-litterfall.cum.melt$litter = litterfall.cum.melt$litter * 0.48 # unit conversion from gDM to gC
-litterfall.cum.melt$litter_SE = litterfall.cum.melt$litter_SE * 0.48 # unit conversion from gDM to gC
+litterfall.cum.melt$litter = litterfall.cum.melt$litter * c1 # unit conversion from gDM to gC
+litterfall.cum.melt$litter_SE = litterfall.cum.melt$litter_SE * c1 # unit conversion from gDM to gC
 
 data.biomass = merge(data.biomass, litterfall.cum.melt, all=TRUE)
 
@@ -827,7 +829,7 @@ print (do.call(grid.arrange,  plots))
 #----------------------------------------------------------------------------------------------------------------
 # Script to read the leaf storage data 
 # read the leaf tnc data over time
-tnc = read.csv("data/WTC_TEMP_CM_LEAFCARB_20130515-20140402_L2.csv") # unit = mg of tnc per g of dry leafmass
+tnc = read.csv("raw_data/WTC_TEMP_CM_LEAFCARB_20130515-20140402_L2.csv") # unit = mg of tnc per g of dry leafmass
 tnc = na.omit(tnc)
 tnc$Date = as.Date(tnc$Date)
 tnc = subset(tnc, Date >= as.Date("2013-09-17") & Date <= as.Date("2014-05-27"))
@@ -838,7 +840,7 @@ tnc.mean <- summaryBy(TNC_mgg ~ Date+T_treatment+chamber_type, data=tnc, FUN=c(m
 names(tnc.mean)[4:5] = c("tnc.conc","tnc.conc_SE")
 
 # read the diurnal leaf tnc data - 2-hourly intervals during a sunny (20 February) and an overcast/rainy day (26 March)
-tnc.diurnal = read.csv("data/WTC_TEMP_CM_LEAFCARB-DIURNAL_20140220-20140326_R.csv") # unit = mg of tnc per g of dry leafmass
+tnc.diurnal = read.csv("raw_data/WTC_TEMP_CM_LEAFCARB-DIURNAL_20140220-20140326_R.csv") # unit = mg of tnc per g of dry leafmass
 tnc.diurnal$Sample.Date <- parse_date_time(tnc.diurnal$Sample.Date,"d m y")
 tnc.diurnal$Sample.Date = as.Date(tnc.diurnal$Sample.Date, format = "%d/%m/%Y")
 keeps <- c("Sample.Date", "Chamber", "TNC")
@@ -849,7 +851,7 @@ tnc.diurnal.mean <- summaryBy(TNC ~ Date+T_treatment+chamber_type, data=tnc.diur
 names(tnc.diurnal.mean)[4:5] = c("tnc.conc","tnc.conc_SE")
 
 # read the diurnal leaf tnc data - trees were girdled
-tnc.girdled = read.csv("data/WTC_TEMP_CM_PETIOLEGIRDLE-LEAFMASS-AREA-CARB_20140507-20140512_L2.csv") # unit = mg of tnc per g of dry leafmass
+tnc.girdled = read.csv("raw_data/WTC_TEMP_CM_PETIOLEGIRDLE-LEAFMASS-AREA-CARB_20140507-20140512_L2.csv") # unit = mg of tnc per g of dry leafmass
 tnc.girdled$Date <- parse_date_time(tnc.girdled$Date,"y m d")
 tnc.girdled$Date = as.Date(tnc.girdled$Date, format = "%Y/%m/%d")
 tnc.girdled = subset(tnc.girdled, treatment %in% as.factor("control"))
@@ -865,14 +867,14 @@ tnc.mean = rbind(tnc.mean, tnc.girdled.mean)
 # unit conversion: 1 g tnc has 0.4 gC (12/30) and 1 g plant has 0.48 gC
 tnc.mean$tnc.conc = tnc.mean$tnc.conc / 1000 # g of tnc per g of dry leafmass
 tnc.mean$tnc.conc_SE = tnc.mean$tnc.conc_SE / 1000 # g of tnc per g of dry leafmass
-tnc.mean$tnc.conc = tnc.mean$tnc.conc * 0.4 / 0.48 # gC in tnc per gC of dry leafmass
-tnc.mean$tnc.conc_SE = tnc.mean$tnc.conc_SE * 0.4 / 0.48 # gC in tnc per gC of dry leafmass
+tnc.mean$tnc.conc = tnc.mean$tnc.conc * 0.4 / c1 # gC in tnc per gC of dry leafmass
+tnc.mean$tnc.conc_SE = tnc.mean$tnc.conc_SE * 0.4 / c1 # gC in tnc per gC of dry leafmass
 
 # get the daily interpotalerd LM
 treeMass.daily$chamber_type = as.factor( ifelse(treeMass.daily$chamber %in% drought.chamb, "drought", "watered") )
 treeMass.daily.sum = summaryBy(leafMass ~ Date+T_treatment+chamber_type, data=treeMass.daily, FUN=c(mean,standard.error))
 names(treeMass.daily.sum)[4:5] = c("LM","LM_SE")
-treeMass.daily.sum[,c(4:5)] = treeMass.daily.sum[,c(4:5)] * 0.48 # unit conversion from gDM to gC
+treeMass.daily.sum[,c(4:5)] = treeMass.daily.sum[,c(4:5)] * c1 # unit conversion from gDM to gC
 
 tnc.final = merge(tnc.mean, treeMass.daily.sum[,c("Date","T_treatment","chamber_type","LM","LM_SE")], by=c("Date","T_treatment","chamber_type"), all=FALSE)
 tnc.final$TNC = tnc.final$tnc.conc * tnc.final$LM # Unit = gC in tnc per gC in plant
@@ -907,7 +909,7 @@ print (do.call(grid.arrange,  plots))
 dev.off()
 
 # write the file with all available inputs and data (GPP, Ra, LA, rootmass, woodmass, foliagemass, litterfall, tnc)
-write.csv(data.biomass, file = "processed_data/data_biomass_litter_tnc.csv", row.names = FALSE)
+write.csv(data.biomass, file = "processed_raw_data/data_biomass_litter_tnc.csv", row.names = FALSE)
 
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
@@ -917,11 +919,10 @@ write.csv(data.biomass, file = "processed_data/data_biomass_litter_tnc.csv", row
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
 # Calculate daily below ground root respiration rates
-c1 = 0.48 # unit conversion from gDM to gC: 1 gDM = 0.48 gC
-q25_drake = 1.86
+q25_drake = 2.25
 
 # Coarse root respiration rates
-branch.resp = read.csv("data/WTC_TEMP_CM_GX-RBRANCH_20140513-20140522_L1_v1.csv") # Rbranch: branch respiration (nmol CO2 g-1 s-1) 
+branch.resp = read.csv("raw_data/WTC_TEMP_CM_GX-RBRANCH_20140513-20140522_L1_v1.csv") # Rbranch: branch respiration (nmol CO2 g-1 s-1) 
 branch.resp$date = as.Date(branch.resp$date)
 branch.resp = subset(branch.resp, date %in% as.Date("2014-05-13")) # Only consider the pre-girdling data
 branch.resp$chamber_type = as.factor( ifelse(branch.resp$chamber %in% drought.chamb, "drought", "watered") )
@@ -942,7 +943,7 @@ rd15.root$rd15.coarseroot = rd15.root$rd15.coarseroot * (10^-9 * 12) * (3600 * 2
 # rd15.coarseroot$rd15.coarseroot_SE = rd15.coarseroot$rd15.coarseroot_SE * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
 
 # Bole and big tap root respiration rates
-bole.resp = read.csv("data/WTC_TEMP_CM_WTCFLUX-STEM_20140528_L1_v1.csv") # Rbranch: branch respiration (nmol CO2 g-1 s-1) 
+bole.resp = read.csv("raw_data/WTC_TEMP_CM_WTCFLUX-STEM_20140528_L1_v1.csv") # Rbranch: branch respiration (nmol CO2 g-1 s-1) 
 bole.resp$chamber_type = as.factor( ifelse(bole.resp$chamber %in% drought.chamb, "drought", "watered") )
 bole.resp$Treatment <- as.factor(paste(bole.resp$T_treatment, bole.resp$chamber_type))
 
@@ -968,7 +969,7 @@ rd15.root$rd15.intermediateroot = exp ((log(rd15.root$rd15.coarseroot) + log(rd1
 
 #----------------------------------------------------------------------------------------------------------------
 # import site weather data, take only soil temperatures at 10 cm depth, format date stuff
-files <- list.files(path = "data/WTC_TEMP_CM_WTCMET", pattern = ".csv", full.names = TRUE)
+files <- list.files(path = "raw_data/WTC_TEMP_CM_WTCMET", pattern = ".csv", full.names = TRUE)
 temp <- lapply(files, fread, sep=",")
 met.data <- rbindlist( temp )
 
@@ -997,7 +998,7 @@ met.data[,c("Rd.fineroot","Rd.intermediateroot","Rd.coarseroot","Rd.boleroot")] 
 Rd <- summaryBy(Rd.fineroot+Rd.intermediateroot+Rd.coarseroot+Rd.boleroot ~ Date+T_treatment, data=met.data, FUN=mean, keep.names=TRUE , na.rm=TRUE) # Sum of all same day Rd
 # colSums(is.na(Rd)) # Check any NA values for Rd
 
-write.csv(Rd, "processed_data/Rd.csv", row.names=FALSE) # unit: gC per gC plant per day
+write.csv(Rd, "processed_raw_data/Rd.csv", row.names=FALSE) # unit: gC per gC plant per day
 
 #----------------------------------------------------------------------------------------------------------------
 # Plot various root respiration data
@@ -1128,7 +1129,7 @@ dev.off()
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
 #- process leaf-scale R vs. T data to find q10 value for WTC3
-rvt <- read.csv("data/WTC_TEMP_CM_GX-RdarkVsT_20140207-20140423_L1.csv")
+rvt <- read.csv("raw_data/WTC_TEMP_CM_GX-RdarkVsT_20140207-20140423_L1.csv")
 rvt$Date <- as.Date(rvt$Date)
 rvt.sub <- subset(rvt,Date==as.Date("2014-02-07")) #- just pull out the data measured prior to the drought
 
@@ -1205,7 +1206,7 @@ dev.copy2pdf(file="output/5.Rdark_vs_T.pdf")
 # harvest.wtc.sub = merge(harvest.wtc[,c("Date","chamber","T_treatment","chamber_type","BranchDM","StemDM")], height.dia.harvest[,c("chamber","height","diameter")], by="chamber")
 # harvest.wtc.sub$woodmass = harvest.wtc.sub$BranchDM + harvest.wtc.sub$StemDM
 #   
-# wood.density = read.csv("data/WTC_TEMP_CM_WOODDENSITY_20140528_L1.csv") # unit = g cm-3
+# wood.density = read.csv("raw_data/WTC_TEMP_CM_WOODDENSITY_20140528_L1.csv") # unit = g cm-3
 # wood.density.mean <- summaryBy(wooddensity ~ chamber, data=wood.density, FUN=c(mean))
 # names(wood.density.mean)[2] = c("wooddensity")
 # 
@@ -1216,7 +1217,7 @@ dev.copy2pdf(file="output/5.Rdark_vs_T.pdf")
 # harvest.wtc.sub$StemDM_calc = harvest.wtc.sub$stemvolume * harvest.wtc.sub$wooddensity
 # harvest.wtc.sub$TF_total = harvest.wtc.sub$woodmass / harvest.wtc.sub$StemDM_calc
 # 
-# branch.data = read.csv("data/WTC_TEMP_CM_BRANCHCENSUS_20130910-20140516_L0_v1.csv") # unit: branchlength = cm, branchdiameter = mm
+# branch.data = read.csv("raw_data/WTC_TEMP_CM_BRANCHCENSUS_20130910-20140516_L0_v1.csv") # unit: branchlength = cm, branchdiameter = mm
 # branch.data$Date = as.POSIXct(branch.data$Date,format="%d/%m/%Y",tz="GMT")
 # branch.data$Date = as.Date(branch.data$Date)
 # branch.data.harvest = subset(branch.data, Date %in% max(branch.data$Date))
