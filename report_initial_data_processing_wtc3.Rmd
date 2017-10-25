@@ -1,7 +1,7 @@
 ---
 title: "Processing WTC-3 data for Carbon Balance Model (CBM)"
 author: "Kashif Mahmud"
-date: "26 September 2017"
+date: "16 October 2017"
 output:
   html_document: default
   word_document: default
@@ -332,12 +332,13 @@ write.csv(data.all, "processed_data/data_all.csv", row.names=FALSE) # unit of re
 
 <!-- #---------------------------------------------------------------------------------------------------------------- -->
 <!-- #---------------------------------------------------------------------------------------------------------------- -->
-#### Step 12: Apply Data Assimilation (DA) with the estimates of WTC-3 carbon pools and fluxes to predict all seven parameters (*k*, *Y*, *a~f~*, *a~w~*, *a~r~*, *s~f~*, *s~r~*), with the aim to quantify the main C balance processes (respiration, carbohydrate utilisation, allocation and turnover) in response to elevated temperature and drought on Eucalyptus tereticornis trees grown in WTCs.     
+#### Step 11: Apply Data Assimilation (DA) with the estimates of WTC-3 carbon pools and fluxes to predict all seven parameters (*k*, *Y*, *a~f~*, *a~w~*, *a~r~*, *s~f~*, *s~r~*), with the aim to quantify the main C balance processes (respiration, carbohydrate utilisation, allocation and turnover) in response to elevated temperature and drought on Eucalyptus tereticornis trees grown in WTCs.     
 
 Hypothesis 1: NSC vs. Temperature
   - As *Paul, Driscoll & Lawlor (1991)* have shown, low T generally results in accumulation of carbohydrates, indicating that growth or storage are limiting. Conversely, at high temperatures, sink demand is large and assimilate is depleted so there should be a marked higher utilization rate (*k*).    
   - The carbohydrate concentration decreased in stem and root tissues for Citrus plants, while it increased in leaf tissues under moderate warm conditions (30/20ºC than at 25/20ºC, *Ribeiro et al. 2012*).     
-  - We hypothesize that drought is carbon limiting and negatively impact plant carbon balance and that plants will rely on stored carbon to survive carbon limitation and therefore deplete their stored carbon reserves over time. We further hypothesize that plants will maintain their carbon reserves due to higher initial storage or a smaller depletion rate.    
+Hypothesis 2: NSC vs. Drought
+- We hypothesize that drought is carbon limiting and negatively impacts plant carbon balance and that plants will rely on stored carbon to survive carbon limitation and therefore deplete their stored carbon reserves over time.     
 
 
 

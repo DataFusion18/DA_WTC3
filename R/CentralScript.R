@@ -52,19 +52,23 @@ source("R/functions_wtc3_CBM.R")
 #-------------------------------------------------------------------------------------
 
 # Model run for WTC3 dataset (without LA feedback)
-# treat.group = as.factor(c("ambient watered")) # Assign 1 treatment to check the model
-treat.group = as.factor(c("ambient drought","ambient watered")) # Assign 2 treatments to compare the results
+treat.group = as.factor(c("ambient watered")) # Assign 1 treatment to check the model
+# treat.group = as.factor(c("ambient drought","ambient watered")) # Assign 2 treatments to compare the results
 # treat.group = as.factor(c("ambient drought","ambient watered","elevated drought","elevated watered")) # Assign all treatments
 data.all = read.csv("processed_data/data_all.csv") 
+# data.all$Ra = 2*data.all$Ra
+# data.all$Ra_SE = 2*data.all$Ra_SE
+
 tnc.partitioning = read.csv("processed_data/tnc_partitioning_data.csv")
 
 source("R/functions_wtc3.R")	
 source("R/functions_wtc3_CBM.R")	
 start <- proc.time() # Start clock
 # 3000 chain length is sufficient for the convergance
-result = CBM.wtc3(chainLength = 3000, no.param.par.var=(nrow(data.all)/4)/30, treat.group=treat.group, with.storage=T, model.comparison=F, model.optimization=F) # Monthly parameters
-# result = CBM.wtc3(chainLength = 3000, no.param.par.var=3, treat.group=treat.group, with.storage=T, model.comparison=F, model.optimization=F) # 2nd degree quadratic parameters
+# result = CBM.wtc3(chainLength = 2000, no.param.par.var=(nrow(data.all)/4)/30, treat.group=treat.group, with.storage=T, model.comparison=F, model.optimization=F) # Monthly parameters
+result = CBM.wtc3(chainLength = 2000, no.param.par.var=4, treat.group=treat.group, with.storage=T, model.comparison=F, model.optimization=F) # 2nd/3rd degree quadratic parameters
 time_elapsed_series <- proc.time() - start # End clock
+result[[6]]
 
 # Plot parameters and biomass data fit
 plot.Modelled.parameters(result)
@@ -86,6 +90,22 @@ Rm.sum = Rm.daily * 252
 output = Rm.sum + (data.set$LM[nrow(data.set)] - data.set$LM[1]) + (data.set$WM[nrow(data.set)] - data.set$WM[1]) + (data.set$RM[nrow(data.set)] - data.set$RM[1]) + 
   (data.set$TNC_tot[max(which(complete.cases(data.set$TNC_tot)))] - data.set$TNC_tot[min(which(complete.cases(data.set$TNC_tot)))]) + data.set$litter[max(which(complete.cases(data.set$litter)))]
 
+Y.modelled = subset(result[[2]], variable %in% as.factor("Y"))
+
+#-------------------------------------------------------------------------------------
+# Check Rabove from data
+Rabove.ini = data.set$Rd.foliage.mean[1]*data.set$LM[1] + data.set$Rd.stem.mean[1]*data.set$WM[1]*data.set$SMratio[1] + data.set$Rd.branch.mean[1]*data.set$WM[1]*data.set$BMratio[1] +
+  Y.modelled$Parameter[1]*((data.set$LM[nrow(data.set)]-data.set$LM[1])/251 + (data.set$WM[nrow(data.set)]-data.set$WM[1])/251)
+
+Rabove.end = data.set$Rd.foliage.mean[nrow(data.set)]*data.set$LM[nrow(data.set)] + data.set$Rd.stem.mean[nrow(data.set)]*data.set$WM[nrow(data.set)]*data.set$SMratio[nrow(data.set)] + data.set$Rd.branch.mean[nrow(data.set)]*data.set$WM[nrow(data.set)]*data.set$BMratio[nrow(data.set)] +
+    Y.modelled$Parameter[nrow(data.set)]*((data.set$LM[nrow(data.set)]-data.set$LM[1])/251 + (data.set$WM[nrow(data.set)]-data.set$WM[1])/251)
+
+# mean(data.set$Ra)/mean(data.set$GPP)
+
+# Rabove = mean(data.set$Rd.foliage.mean)*(data.set$LM[1]+data.set$LM[nrow(data.set)])/2 + mean(data.set$Rd.stem.mean)*(data.set$WM[1]+data.set$WM[nrow(data.set)])/2*mean(data.set$SMratio) 
+# + mean(data.set$Rd.branch.mean)*(data.set$WM[1]+data.set$WM[nrow(data.set)])/2*mean(data.set$BMratio) + 
+#   mean(Y.modelled$Parameter)*(data.set$LM[nrow(data.set)]-data.set$LM[1] + data.set$WM[nrow(data.set)]-data.set$WM[1])
+# Ra = sum(data.set$Ra)
 
 #-------------------------------------------------------------------------------------
 

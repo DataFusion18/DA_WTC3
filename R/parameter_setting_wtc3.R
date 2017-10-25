@@ -61,19 +61,26 @@ param.sr <- matrix(c(0,0.0005,0.001) , nrow=1, ncol=3, byrow=T) # All Groups hav
 
 #-------------------------------------------------------------------------------------
 if (no.param > 1) {
-  param.Y <- rbind(param.Y, c(-(param.Y[3]-param.Y[1])/2/nrow(data), 0, (param.Y[3]-param.Y[1])/2/nrow(data)))
-  param.af <- rbind(param.af, c(-(param.af[3]-param.af[1])/nrow(data), 0, (param.af[3]-param.af[1])/nrow(data)))
-  param.as <- rbind(param.as, c(-(param.as[3]-param.as[1])/2/nrow(data), 0, (param.as[3]-param.as[1])/2/nrow(data)))
-  param.sf <- rbind(param.sf, c(-(param.sf[3]-param.sf[1])/nrow(data), 0, (param.sf[3]-param.sf[1])/nrow(data)))
-  param.sr <- rbind(param.sr, c(-(param.sr[3]-param.sr[1])/nrow(data), 0, (param.sr[3]-param.sr[1])/nrow(data)))
+  param.Y <- rbind(param.Y, c(-(param.Y[3]-param.Y[1])/2/nrow(data.set), 0, (param.Y[3]-param.Y[1])/2/nrow(data.set)))
+  param.af <- rbind(param.af, c(-(param.af[3]-param.af[1])/nrow(data.set), 0, (param.af[3]-param.af[1])/nrow(data.set)))
+  param.as <- rbind(param.as, c(-(param.as[3]-param.as[1])/2/nrow(data.set), 0, (param.as[3]-param.as[1])/2/nrow(data.set)))
+  param.sf <- rbind(param.sf, c(-(param.sf[3]-param.sf[1])/nrow(data.set), 0, (param.sf[3]-param.sf[1])/nrow(data.set)))
+  param.sr <- rbind(param.sr, c(-(param.sr[3]-param.sr[1])/nrow(data.set), 0, (param.sr[3]-param.sr[1])/nrow(data.set)))
 }
 
 if (no.param > 2) {
-  param.Y <- rbind(param.Y, c((param.Y[1,1]-param.Y[1,3]-param.Y[2,3]*nrow(data))/(2*nrow(data)^2), 0, (param.Y[1,3]-param.Y[1,1]-param.Y[2,1]*nrow(data))/(2*nrow(data)^2)))
-  param.af <- rbind(param.af, c((param.af[1,1]-param.af[1,3]-param.af[2,3]*nrow(data))/(nrow(data)^2), 0, (param.af[1,3]-param.af[1,1]-param.af[2,1]*nrow(data))/(nrow(data)^2)))
-  param.as <- rbind(param.as, c((param.as[1,1]-param.as[1,3]-param.as[2,3]*nrow(data))/(2*nrow(data)^2), 0, (param.as[1,3]-param.as[1,1]-param.as[2,1]*nrow(data))/(2*nrow(data)^2)))
-  param.sf <- rbind(param.sf, c((param.sf[1,1]-param.sf[1,3]-param.sf[2,3]*nrow(data))/(nrow(data)^2), 0, (param.sf[1,3]-param.sf[1,1]-param.sf[2,1]*nrow(data))/(nrow(data)^2)))
-  param.sr <- rbind(param.sr, c((param.sr[1,1]-param.sr[1,3]-param.sr[2,3]*nrow(data))/(nrow(data)^2), 0, (param.sr[1,3]-param.sr[1,1]-param.sr[2,1]*nrow(data))/(nrow(data)^2)))
+  param.Y <- rbind(param.Y, c((param.Y[1,1]-param.Y[1,3]-param.Y[2,3]*nrow(data.set))/(2*nrow(data.set)^2), 0, (param.Y[1,3]-param.Y[1,1]-param.Y[2,1]*nrow(data.set))/(2*nrow(data.set)^2)))
+  param.af <- rbind(param.af, c((param.af[1,1]-param.af[1,3]-param.af[2,3]*nrow(data.set))/(2*nrow(data.set)^2), 0, (param.af[1,3]-param.af[1,1]-param.af[2,1]*nrow(data.set))/(nrow(data.set)^2)))
+  param.as <- rbind(param.as, c((param.as[1,1]-param.as[1,3]-param.as[2,3]*nrow(data.set))/(2*nrow(data.set)^2), 0, (param.as[1,3]-param.as[1,1]-param.as[2,1]*nrow(data.set))/(2*nrow(data.set)^2)))
+  param.sf <- rbind(param.sf, c((param.sf[1,1]-param.sf[1,3]-param.sf[2,3]*nrow(data.set))/(2*nrow(data.set)^2), 0, (param.sf[1,3]-param.sf[1,1]-param.sf[2,1]*nrow(data.set))/(nrow(data.set)^2)))
+  param.sr <- rbind(param.sr, c((param.sr[1,1]-param.sr[1,3]-param.sr[2,3]*nrow(data.set))/(2*nrow(data.set)^2), 0, (param.sr[1,3]-param.sr[1,1]-param.sr[2,1]*nrow(data.set))/(nrow(data.set)^2)))
+}
+if (no.param > 3) {
+  param.Y <- rbind(param.Y, c((param.Y[1,1]-param.Y[1,3]-param.Y[2,3]*nrow(data.set)-param.Y[3,3]*(nrow(data.set)^2))/(2*nrow(data.set)^3), 0, (param.Y[1,3]-param.Y[1,1]-param.Y[2,1]*nrow(data.set)-param.Y[3,1]*(nrow(data.set)^2))/(2*nrow(data.set)^3)))
+  param.af <- rbind(param.af, c((param.af[1,1]-param.af[1,3]-param.af[2,3]*nrow(data.set)-param.af[3,3]*(nrow(data.set)^2))/(2*nrow(data.set)^3), 0, (param.af[1,3]-param.af[1,1]-param.af[2,1]*nrow(data.set)-param.af[3,1]*(nrow(data.set)^2))/(2*nrow(data.set)^3)))
+  param.as <- rbind(param.as, c((param.as[1,1]-param.as[1,3]-param.as[2,3]*nrow(data.set)-param.as[3,3]*(nrow(data.set)^2))/(2*nrow(data.set)^3), 0, (param.as[1,3]-param.as[1,1]-param.as[2,1]*nrow(data.set)-param.as[3,1]*(nrow(data.set)^2))/(2*nrow(data.set)^3)))
+  param.sf <- rbind(param.sf, c((param.sf[1,1]-param.sf[1,3]-param.sf[2,3]*nrow(data.set)-param.sf[3,3]*(nrow(data.set)^2))/(2*nrow(data.set)^3), 0, (param.sf[1,3]-param.sf[1,1]-param.sf[2,1]*nrow(data.set)-param.sf[3,1]*(nrow(data.set)^2))/(2*nrow(data.set)^3)))
+  param.sr <- rbind(param.sr, c((param.sr[1,1]-param.sr[1,3]-param.sr[2,3]*nrow(data.set)-param.sr[3,3]*(nrow(data.set)^2))/(2*nrow(data.set)^3), 0, (param.sr[1,3]-param.sr[1,1]-param.sr[2,1]*nrow(data.set)-param.sr[3,1]*(nrow(data.set)^2))/(2*nrow(data.set)^3)))
 }
 #-------------------------------------------------------------------------------------
 
@@ -87,10 +94,13 @@ if (with.storage==F) {
 } else { # (with.storage==T) 
   param.k <- matrix(c(0,0.5,1) , nrow=1, ncol=3, byrow=T)
   if (no.param > 1) {
-    param.k <- rbind(param.k, c(-(param.k[3]-param.k[1])/nrow(data), 0, (param.k[3]-param.k[1])/nrow(data)))
+    param.k <- rbind(param.k, c(-(param.k[3]-param.k[1])/nrow(data.set), 0, (param.k[3]-param.k[1])/nrow(data.set)))
   } 
   if (no.param > 2) {
-    param.k <- rbind(param.k, c((param.k[1,1]-param.k[1,3]-param.k[2,3]*nrow(data))/(nrow(data)^2), 0, (param.k[1,3]-param.k[1,1]-param.k[2,1]*nrow(data))/(nrow(data)^2)))
+    param.k <- rbind(param.k, c((param.k[1,1]-param.k[1,3]-param.k[2,3]*nrow(data.set))/(nrow(data.set)^2), 0, (param.k[1,3]-param.k[1,1]-param.k[2,1]*nrow(data.set))/(nrow(data.set)^2)))
+  }
+  if (no.param > 3) {
+    param.k <- rbind(param.k, c((param.k[1,1]-param.k[1,3]-param.k[2,3]*nrow(data.set)-param.k[3,3]*(nrow(data.set)^2))/(2*nrow(data.set)^3), 0, (param.k[1,3]-param.k[1,1]-param.k[2,1]*nrow(data.set)-param.k[3,1]*(nrow(data.set)^2))/(2*nrow(data.set)^3)))
   }
   param = data.frame(param.k,param.Y,param.af,param.as,param.sf,param.sr)
   names(param) <- c("k_min","k","k_max","Y_min","Y","Y_max","af_min","af","af_max","as_min","as","as_max","sf_min","sf","sf_max","sr_min","sr","sr_max")

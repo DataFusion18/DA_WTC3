@@ -88,7 +88,7 @@ p4 = ggplot(treeMass.ratio.melt, aes(x=Date, y=value, group = interaction(variab
   theme_bw() +
   theme(legend.title = element_text(colour="black", size=font.size)) +
   theme(legend.text = element_text(colour="black", size=font.size-1)) +
-  theme(legend.position = c(0.8,0.7), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
+  theme(legend.position = c(0.7,0.67), legend.box = "horizontal") + theme(legend.key.height=unit(0.8,"line")) +
   theme(legend.key = element_blank()) +
   theme(text = element_text(size=font.size)) +
   theme(axis.title.x = element_blank()) +
