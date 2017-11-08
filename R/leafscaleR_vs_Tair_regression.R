@@ -209,5 +209,5 @@ names(Tair.final)[1] = "Date"
 # Tair.final = subset(Tair[, c("chamber","T_treatment","Date","time","Tair_al")], Date  >= "2013-09-17" & Date  <= "2014-05-26")
 # Tair.final = summaryBy(Tair_al ~ Date+T_treatment, data=Tair.final, FUN=c(mean), na.rm=TRUE)
 Tair.final$rd25.foliage = coef(Rleaf25)[1] + (coef(Rleaf25)[2] * Tair.final$Tair_al.mean)
-# Tair.final$rd25.foliage = Tair.final$rd25.foliage * (10^-9 * 12) * (3600 * 24) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
-Tair.final$rd25.foliage = Tair.final$rd25.foliage * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+Tair.final$rd25.foliage = Tair.final$rd25.foliage * (10^-9 * 12) * (3600 * 24) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+# Tair.final$rd25.foliage = Tair.final$rd25.foliage * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1

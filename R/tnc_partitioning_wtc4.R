@@ -28,4 +28,16 @@ tnc.partitioning$warm_ratio = tnc.partitioning[,3] / tnc.partitioning[4,3]
 
 tnc.partitioning$average_ratio = (tnc.partitioning$amb_ratio + tnc.partitioning$warm_ratio) / 2
 
-  
+tnc.partitioning.ratio = data.frame(matrix(ncol = 4, nrow = 252))
+names(tnc.partitioning.ratio) = c("Date","foliage","wood","root")
+tnc.partitioning.ratio$Date = as.Date(as.Date("2013-09-17"):as.Date("2014-05-26"))
+
+# Consider a linear change over time for TNC partitioning
+tnc.partitioning.ratio[1,2:4] <- c(0.75,0.16,0.09) # TNC partitioning according to Sink limited Pot experiment (Free Seedling)
+tnc.partitioning.ratio[nrow(tnc.partitioning.ratio),2:4] <- tnc.partitioning$average_ratio[1:3]
+
+for (i in 2:ncol(tnc.partitioning.ratio)) {
+  tnc.partitioning.ratio[1:nrow(tnc.partitioning.ratio),i] = seq(tnc.partitioning.ratio[1,i], tnc.partitioning.ratio[nrow(tnc.partitioning.ratio),i], length.out = nrow(tnc.partitioning.ratio))
+} 
+
+tnc.partitioning = tnc.partitioning.ratio

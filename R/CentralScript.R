@@ -52,29 +52,40 @@ source("R/functions_wtc3_CBM.R")
 #-------------------------------------------------------------------------------------
 
 # Model run for WTC3 dataset (without LA feedback)
-treat.group = as.factor(c("ambient watered")) # Assign 1 treatment to check the model
+# treat.group = as.factor(c("ambient watered")) # Assign 1 treatment to check the model
+# treat.group = as.factor(c("ambient drought","elevated drought")) # Assign 1 treatment to check the model
 # treat.group = as.factor(c("ambient drought","ambient watered")) # Assign 2 treatments to compare the results
-# treat.group = as.factor(c("ambient drought","ambient watered","elevated drought","elevated watered")) # Assign all treatments
+treat.group = as.factor(c("ambient drought","ambient watered","elevated drought","elevated watered")) # Assign all treatments
 data.all = read.csv("processed_data/data_all.csv") 
-# data.all$Ra = 2*data.all$Ra
-# data.all$Ra_SE = 2*data.all$Ra_SE
-
 tnc.partitioning = read.csv("processed_data/tnc_partitioning_data.csv")
 
 source("R/functions_wtc3.R")	
 source("R/functions_wtc3_CBM.R")	
 start <- proc.time() # Start clock
 # 3000 chain length is sufficient for the convergance
-# result = CBM.wtc3(chainLength = 2000, no.param.par.var=(nrow(data.all)/4)/30, treat.group=treat.group, with.storage=T, model.comparison=F, model.optimization=F) # Monthly parameters
-result = CBM.wtc3(chainLength = 2000, no.param.par.var=4, treat.group=treat.group, with.storage=T, model.comparison=F, model.optimization=F) # 2nd/3rd degree quadratic parameters
+with.storage = T
+result = CBM.wtc3(chainLength = 3000, no.param.par.var=(nrow(data.all)/4)/30, treat.group=treat.group, with.storage, model.comparison=F, model.optimization=F) # Monthly parameters
+# result = CBM.wtc3(chainLength = 3000, no.param.par.var=4, treat.group=treat.group, with.storage, model.comparison=F, model.optimization=F) # Quadratic/Cubic parameters
 time_elapsed_series <- proc.time() - start # End clock
 result[[6]]
+write.csv(result[[6]], "output/bic.csv", row.names=FALSE) # unit of respiration rates: gC per gC plant per day	
 
 # Plot parameters and biomass data fit
-plot.Modelled.parameters(result)
-plot.Modelled.biomass(result)
+plot.Modelled.parameters(result,with.storage)
+plot.Modelled.biomass(result,with.storage)
+#-------------------------------------------------------------------------------------
+
 
 #-------------------------------------------------------------------------------------
+# Calculate total C partitioning for individual treatments 
+# and make figure 7 and Table S1
+# source("R/functions_CBM.R")
+source("R/C_partitioning_wtc3.R")
+#-------------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------------
+
 # Check the C input and output balance
 data.set = subset(data.all,(Treatment %in% treat.group[v]))
 input = sum(data.set$GPP)
@@ -102,8 +113,8 @@ Rabove.end = data.set$Rd.foliage.mean[nrow(data.set)]*data.set$LM[nrow(data.set)
 
 # mean(data.set$Ra)/mean(data.set$GPP)
 
-# Rabove = mean(data.set$Rd.foliage.mean)*(data.set$LM[1]+data.set$LM[nrow(data.set)])/2 + mean(data.set$Rd.stem.mean)*(data.set$WM[1]+data.set$WM[nrow(data.set)])/2*mean(data.set$SMratio) 
-# + mean(data.set$Rd.branch.mean)*(data.set$WM[1]+data.set$WM[nrow(data.set)])/2*mean(data.set$BMratio) + 
+# Rabove = mean(data.set$Rd.foliage.mean)*(data.set$LM[1]+data.set$LM[nrow(data.set)])/2 + mean(data.set$Rd.stem.mean)*(data.set$WM[1]+data.set$WM[nrow(data.set)])/2*mean(data.set$SMratio)
+# + mean(data.set$Rd.branch.mean)*(data.set$WM[1]+data.set$WM[nrow(data.set)])/2*mean(data.set$BMratio) +
 #   mean(Y.modelled$Parameter)*(data.set$LM[nrow(data.set)]-data.set$LM[1] + data.set$WM[nrow(data.set)]-data.set$WM[1])
 # Ra = sum(data.set$Ra)
 

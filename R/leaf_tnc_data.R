@@ -51,15 +51,28 @@ tnc.final = merge(tnc.mean, treeMass.daily.sum[,c("Date","T_treatment","chamber_
 tnc.final$TNC_leaf = tnc.final$tnc.conc * tnc.final$LM # Unit = gC
 tnc.final$TNC_leaf_SE = tnc.final$tnc.conc_SE * tnc.final$LM # Unit = gC
 
+tnc.final = merge(tnc.final,tnc.partitioning, by="Date")
+
 # Estimate total plant TNC from the partitioning data of WTC-4
-tnc.final$TNC_tot = tnc.final$TNC_leaf / tnc.partitioning$average_ratio[tnc.partitioning$organs == "foliage"] # Unit = gC
-tnc.final$TNC_tot_SE = tnc.final$TNC_leaf_SE / tnc.partitioning$average_ratio[tnc.partitioning$organs == "foliage"] # Unit = gC
+tnc.final$TNC_tot = tnc.final$TNC_leaf / tnc.final$foliage # Unit = gC
+tnc.final$TNC_tot_SE = tnc.final$TNC_leaf_SE / tnc.final$foliage # Unit = gC
 
-tnc.final$TNC_wood = tnc.final$TNC_tot * tnc.partitioning$average_ratio[tnc.partitioning$organs == "wood"] # Unit = gC
-tnc.final$TNC_wood_SE = tnc.final$TNC_tot_SE * tnc.partitioning$average_ratio[tnc.partitioning$organs == "wood"] # Unit = gC
+tnc.final$TNC_wood = tnc.final$TNC_tot * tnc.final$wood # Unit = gC
+tnc.final$TNC_wood_SE = tnc.final$TNC_tot_SE * tnc.final$wood # Unit = gC
 
-tnc.final$TNC_root = tnc.final$TNC_tot * tnc.partitioning$average_ratio[tnc.partitioning$organs == "root"] # Unit = gC
-tnc.final$TNC_root_SE = tnc.final$TNC_tot_SE * tnc.partitioning$average_ratio[tnc.partitioning$organs == "root"] # Unit = gC
+tnc.final$TNC_root = tnc.final$TNC_tot * tnc.final$root # Unit = gC
+tnc.final$TNC_root_SE = tnc.final$TNC_tot_SE * tnc.final$root # Unit = gC
+
+
+
+# tnc.final$TNC_tot = tnc.final$TNC_leaf / tnc.partitioning$average_ratio[tnc.partitioning$organs == "foliage"] # Unit = gC
+# tnc.final$TNC_tot_SE = tnc.final$TNC_leaf_SE / tnc.partitioning$average_ratio[tnc.partitioning$organs == "foliage"] # Unit = gC
+# 
+# tnc.final$TNC_wood = tnc.final$TNC_tot * tnc.partitioning$average_ratio[tnc.partitioning$organs == "wood"] # Unit = gC
+# tnc.final$TNC_wood_SE = tnc.final$TNC_tot_SE * tnc.partitioning$average_ratio[tnc.partitioning$organs == "wood"] # Unit = gC
+# 
+# tnc.final$TNC_root = tnc.final$TNC_tot * tnc.partitioning$average_ratio[tnc.partitioning$organs == "root"] # Unit = gC
+# tnc.final$TNC_root_SE = tnc.final$TNC_tot_SE * tnc.partitioning$average_ratio[tnc.partitioning$organs == "root"] # Unit = gC
 
 
 

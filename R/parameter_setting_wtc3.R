@@ -86,7 +86,7 @@ if (no.param > 3) {
 
 #-------------------------------------------------------------------------------------
 if (with.storage==F) {
-  param = data.frame(param.Y,param.af,param.as,param.sf)
+  param = data.frame(param.Y,param.af,param.as,param.sf,param.sr)
   names(param) <- c("Y_min","Y","Y_max","af_min","af","af_max","as_min","as","as_max","sf_min","sf","sf_max","sr_min","sr","sr_max")
   pMinima <- param[ ,c("Y_min","af_min","as_min","sf_min","sr_min")]
   pMaxima <- param[ ,c("Y_max","af_max","as_max","sf_max","sr_max")]

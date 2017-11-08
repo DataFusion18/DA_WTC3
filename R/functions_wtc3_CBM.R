@@ -5,62 +5,49 @@
 #----------------------------------------------------------------------------------------------------------------
 
 # This script calcualtes LogLikelihood to find the most accurate model
-logLikelihood.wtc3 <- function (no.param.par.var,data.set,output,model.comparison) {
+logLikelihood.wtc3 <- function (no.param.par.var,data.set,output,with.storage,model.comparison) {
   logLi <- matrix(0, nrow=nrow(data.set), ncol = 1) # Initialising the logLi
-  
-  # sum(!is.na(data.set$LM))/sum(!is.na(data.set$TNC_leaf))
-  # sum(!is.na(data.set$LM))/sum(!is.na(data.set$Ra))
+  data_count = sum(!is.na(data.set$LM)) + sum(!is.na(data.set$WM)) + sum(!is.na(data.set$RM)) + sum(!is.na(data.set$Ra)) + sum(!is.na(data.set$TNC_leaf)) + sum(!is.na(data.set$litter))
+  # data_count = sum(!is.na(data.set$LM)) + sum(!is.na(data.set$WM)) + sum(!is.na(data.set$RM)) + sum(!is.na(data.set$TNC_leaf)) + sum(!is.na(data.set$litter))
   
   for (i in 1:nrow(data.set)) {
     if (!is.na(data.set$LM[i])) {
-      logLi[i] = - 0.5*((output$Mleaf[i] - data.set$LM[i])/data.set$LM_SE[i])^2 - log(data.set$LM_SE[i]) - log(2*pi)^0.5
+      logLi[i] = - ((data_count/sum(!is.na(data.set$LM)))*0.5*((output$Mleaf[i] - data.set$LM[i])/data.set$LM_SE[i])^2 - log(data.set$LM_SE[i]) - log(2*pi)^0.5)
     }
     if (!is.na(data.set$WM[i])) {
-      logLi[i] = logLi[i] - 0.5*((output$Mwood[i] - data.set$WM[i])/data.set$WM_SE[i])^2 - log(data.set$WM_SE[i]) - log(2*pi)^0.5
+      logLi[i] = logLi[i] - ((data_count/sum(!is.na(data.set$WM)))*0.5*((output$Mwood[i] - data.set$WM[i])/data.set$WM_SE[i])^2 - log(data.set$WM_SE[i]) - log(2*pi)^0.5)
     }
     if (!is.na(data.set$RM[i])) {
-      # logLi[i] = logLi[i] - 10*(0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5) # multiplied by 20 to give extra weight
-      logLi[i] = logLi[i] - (0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5) # multiplied by 20 to give extra weight
+      logLi[i] = logLi[i] - ((data_count/sum(!is.na(data.set$RM)))*(0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5)) # multiplied by 2 to give extra weight
+      # logLi[i] = logLi[i] - (0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5) # multiplied by 20 to give extra weight
     }
-    # if (i > 1) {
-    #   if (!is.na(data.set$Ra[i])) {
-    #     # if (no.param.par.var < 4) {
-    #       # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
-    #       #                                Y[i]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
-    #       #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
-    #       logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-    #       # logLi[i] = logLi[i] - 0.075*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-    #     # } else { # no.param.par.var > 4; monthly parameter setting)
-    #       # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
-    #       #                                Y[(i-1)-(j[i-1])]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
-    #       #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
-    #       # logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-    #       # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-    #     # }
-    #   }
-    # }
-    if (model.comparison==F) {
+    if (i > 1) {
+      if (!is.na(data.set$Ra[i])) {
+        logLi[i] = logLi[i] - ((data_count/sum(!is.na(data.set$Ra)))*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5))
+      }
+    }
+    if (!is.null(data.set$litter)) {
+      if (!is.na(data.set$litter[i])) {
+        logLi[i] = logLi[i] - (data_count/sum(!is.na(data.set$litter)))*0.5*((output$Mlit[i] - data.set$litter[i])/data.set$litter_SE[i])^2 - log(data.set$litter_SE[i]) - log(2*pi)^0.5
+      }
+    }
+    # if (model.comparison==F) {
+    if (with.storage==T) {
       if (!is.null(data.set$TNC_leaf)) {
         if (!is.na(data.set$TNC_leaf[i])) {
-          # logLi[i] = logLi[i] - 1.5*(0.5*((output$Sleaf[i] - data.set$TNC_leaf[i])/data.set$TNC_leaf_SE[i])^2 - log(data.set$TNC_leaf_SE[i]) - log(2*pi)^0.5)
-          logLi[i] = logLi[i] - (0.5*((output$Sleaf[i] - data.set$TNC_leaf[i])/data.set$TNC_leaf_SE[i])^2 - log(data.set$TNC_leaf_SE[i]) - log(2*pi)^0.5)
-        }
-      }
-      if (!is.null(data.set$litter)) {
-        if (!is.na(data.set$litter[i])) {
-          logLi[i] = logLi[i] - 0.5*((output$Mlit[i] - data.set$litter[i])/data.set$litter_SE[i])^2 - log(data.set$litter_SE[i]) - log(2*pi)^0.5
+          logLi[i] = logLi[i] - ((data_count/sum(!is.na(data.set$TNC_leaf)))*(0.5*((output$Sleaf[i] - data.set$TNC_leaf[i])/data.set$TNC_leaf_SE[i])^2 - log(data.set$TNC_leaf_SE[i]) - log(2*pi)^0.5))
+          # logLi[i] = logLi[i] - (0.5*((output$Sleaf[i] - data.set$TNC_leaf[i])/data.set$TNC_leaf_SE[i])^2 - log(data.set$TNC_leaf_SE[i]) - log(2*pi)^0.5)
         }
       }
     }
+    # }
   }
-  return(sum(logLi))
+  return(sum(logLi)/data_count)
 }
 
 # This script calcualtes LogLikelihood to find the most accurate model
-logLikelihood.wtc3.final <- function (no.param.par.var,data.set,output,model.comparison) {
+logLikelihood.wtc3.final <- function (no.param.par.var,data.set,output,with.storage,model.comparison) {
   logLi <- matrix(0, nrow=nrow(data.set), ncol = 1) # Initialising the logLi
-  
-  # sum(!is.na(data.set$LM))/sum(!is.na(data.set$TNC_leaf))
   
   for (i in 1:nrow(data.set)) {
     if (!is.na(data.set$LM[i])) {
@@ -73,33 +60,36 @@ logLikelihood.wtc3.final <- function (no.param.par.var,data.set,output,model.com
       # logLi[i] = logLi[i] - 10*(0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5) # multiplied by 20 to give extra weight
       logLi[i] = logLi[i] - (0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5) # multiplied by 20 to give extra weight
     }
-    # if (i > 1) {
-    #   if (!is.na(data.set$Ra[i])) {
-    #     # if (no.param.par.var < 4) {
-    #       # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
-    #       #                                Y[i]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
-    #       #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
-    #       logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-    #       # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-    #     # } else { # no.param.par.var > 4; monthly parameter setting)
-    #       # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
-    #       #                                Y[(i-1)-(j[i-1])]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
-    #       #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
-    #       # logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-    #       # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-    #     # }
-    #   }
-    # }
-    if (model.comparison==F) {
-      if (!is.null(data.set$TNC_leaf)) {
-        if (!is.na(data.set$TNC_leaf[i])) {
-          # logLi[i] = logLi[i] - 1.5*(0.5*((output$Sleaf[i] - data.set$TNC_leaf[i])/data.set$TNC_leaf_SE[i])^2 - log(data.set$TNC_leaf_SE[i]) - log(2*pi)^0.5)
-          logLi[i] = logLi[i] - (0.5*((output$Sleaf[i] - data.set$TNC_leaf[i])/data.set$TNC_leaf_SE[i])^2 - log(data.set$TNC_leaf_SE[i]) - log(2*pi)^0.5)
-        }
+    if (i > 1) {
+      if (!is.na(data.set$Ra[i])) {
+        # if (no.param.par.var < 4) {
+        # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
+        #                                Y[i]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
+        #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
+        logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
+        # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
+        # } else { # no.param.par.var > 4; monthly parameter setting)
+        # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
+        #                                Y[(i-1)-(j[i-1])]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
+        #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
+        # logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
+        # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
+        # }
       }
-      if (!is.null(data.set$litter)) {
-        if (!is.na(data.set$litter[i])) {
-          logLi[i] = logLi[i] - 0.5*((output$Mlit[i] - data.set$litter[i])/data.set$litter_SE[i])^2 - log(data.set$litter_SE[i]) - log(2*pi)^0.5
+    }
+    if (!is.null(data.set$litter)) {
+      if (!is.na(data.set$litter[i])) {
+        logLi[i] = logLi[i] - 0.5*((output$Mlit[i] - data.set$litter[i])/data.set$litter_SE[i])^2 - log(data.set$litter_SE[i]) - log(2*pi)^0.5
+      }
+    }
+    
+    if (model.comparison==F) {
+      if (with.storage==T) {
+        if (!is.null(data.set$TNC_leaf)) {
+          if (!is.na(data.set$TNC_leaf[i])) {
+            # logLi[i] = logLi[i] - 1.5*(0.5*((output$Sleaf[i] - data.set$TNC_leaf[i])/data.set$TNC_leaf_SE[i])^2 - log(data.set$TNC_leaf_SE[i]) - log(2*pi)^0.5)
+            logLi[i] = logLi[i] - (0.5*((output$Sleaf[i] - data.set$TNC_leaf[i])/data.set$TNC_leaf_SE[i])^2 - log(data.set$TNC_leaf_SE[i]) - log(2*pi)^0.5)
+          }
         }
       }
     }
@@ -170,7 +160,7 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
       if (no.param.par.var < 5) {
         # This script initializes the parameter setting
         source("R/parameter_setting_wtc3.R", local=TRUE) # initialize 'sf' prior differently for grouped treatments
-
+        
       } else { # no.param.par.var > 5; monthly parameter setting) 
         j = c()
         j[1] = 0
@@ -178,23 +168,36 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
         j[i] = i - ceiling(i/param.vary)*1  # j is for parameter settings for various time frames
         
         # Setting lower and upper bounds of the prior parameter pdf, and starting point of the chain
-        param.k <- matrix(c(0,0.8,1) , nrow=no.param, ncol=3, byrow=T) 
+        if (with.storage==T) {
+          param.k <- matrix(c(0,0.8,1) , nrow=no.param, ncol=3, byrow=T) 
+        }
         param.Y <- matrix(c(0.2,0.3,0.4) , nrow=no.param, ncol=3, byrow=T) 
         param.af <- matrix(c(0,0.2,1) , nrow=no.param, ncol=3, byrow=T) 
         param.as <- matrix(c(0,0.4,1) , nrow=no.param, ncol=3, byrow=T) 
         param.sf <- matrix(c(0,0.0005,0.001) , nrow=no.param, ncol=3, byrow=T) 
         param.sr <- matrix(c(0,0.0005,0.001) , nrow=no.param, ncol=3, byrow=T)
         
-        param = data.frame(param.k,param.Y,param.af,param.as,param.sf,param.sr)
-        names(param) <- c("k_min","k","k_max","Y_min","Y","Y_max","af_min","af","af_max","as_min","as","as_max","sf_min","sf","sf_max","sr_min","sr","sr_max")
-        pMinima <- param[ ,c("k_min","Y_min","af_min","as_min","sf_min","sr_min")]
-        pMaxima <- param[ ,c("k_max","Y_max","af_max","as_max","sf_max","sr_max")]
-        pValues <- param[ ,c("k","Y","af","as","sf","sr")] # Starting point of the chain
+        if (with.storage==T) {
+          param = data.frame(param.k,param.Y,param.af,param.as,param.sf,param.sr)
+          names(param) <- c("k_min","k","k_max","Y_min","Y","Y_max","af_min","af","af_max","as_min","as","as_max","sf_min","sf","sf_max","sr_min","sr","sr_max")
+          pMinima <- param[ ,c("k_min","Y_min","af_min","as_min","sf_min","sr_min")]
+          pMaxima <- param[ ,c("k_max","Y_max","af_max","as_max","sf_max","sr_max")]
+          pValues <- param[ ,c("k","Y","af","as","sf","sr")] # Starting point of the chain
+        } else { # (with.storage==F) 
+          param = data.frame(param.Y,param.af,param.as,param.sf,param.sr)
+          names(param) <- c("Y_min","Y","Y_max","af_min","af","af_max","as_min","as","as_max","sf_min","sf","sf_max","sr_min","sr","sr_max")
+          pMinima <- param[ ,c("Y_min","af_min","as_min","sf_min","sr_min")]
+          pMaxima <- param[ ,c("Y_max","af_max","as_max","sf_max","sr_max")]
+          pValues <- param[ ,c("Y","af","as","sf","sr")] # Starting point of the chain
+        }
         pChain <- matrix(0, nrow=chainLength, ncol = no.param*no.var+1) # Initialising the chain
       }
       
       # Defining the variance-covariance matrix for proposal generation
+      # vcov = (0.006*(pMaxima-pMinima))^2
       vcov = (0.005*(pMaxima-pMinima))^2
+      # vcov = (0.0025*(pMaxima-pMinima))^2
+      # vcov = (0.001*(pMaxima-pMinima))^2
       vcovProposal =  vcov # The higher the coefficient, the higher the deviations in parameter time series
       
       
@@ -210,13 +213,13 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
         if (with.storage==T) {
           output.set = model(no.param,data.set,tnc.partitioning,Y=pValues$Y,k=pValues$k,af=pValues$af,as=pValues$as,sf=pValues$sf,sr=pValues$sr)
         } else {
-          output.set = model.without.storage(no.param,data.set,pValues$Y,pValues$af,pValues$as,pValues$sf,pValues$sr)
+          output.set = model.without.storage(no.param,data.set,Y=pValues$Y,af=pValues$af,as=pValues$as,sf=pValues$sf,sr=pValues$sr)
         }
       } else { # no.param.par.var > 5; monthly parameter setting) 
         if (with.storage==T) {
           output.set = model.monthly(data.set,j,tnc.partitioning,Y=pValues$Y,k=pValues$k,af=pValues$af,as=pValues$as,sf=pValues$sf,sr=pValues$sr)
         } else {
-          output.set = model.without.storage.monthly(data.set,j,pValues$Y,pValues$af,pValues$as,pValues$sf,pValues$sr)
+          output.set = model.without.storage.monthly(data.set,j,Y=pValues$Y,af=pValues$af,as=pValues$as,sf=pValues$sf,sr=pValues$sr)
         }
       }
       
@@ -231,7 +234,7 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
       output$treatment = as.factor(treat.group[v])
       
       # data.set = data.set[order(data.set$treatment),]
-      logL0 <- logLikelihood.wtc3(no.param.par.var,data.set,output,model.comparison) # Calculate log likelihood of starting point of the chain
+      logL0 <- logLikelihood.wtc3(no.param.par.var,data.set,output,with.storage,model.comparison) # Calculate log likelihood of starting point of the chain
       
       if (with.storage==T) {
         pChain[1,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,pValues$sf,pValues$sr,logL0) # Assign the first parameter set with log likelihood
@@ -312,24 +315,40 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
           # }
           
           # data = data[order(data$volume),]
-          logL1 <- logLikelihood.wtc3(no.param.par.var,data.set,out.cand,model.comparison) # Calculate log likelihood
+          logL1 <- logLikelihood.wtc3(no.param.par.var,data.set,out.cand,with.storage,model.comparison) # Calculate log likelihood
           
           # Calculating the logarithm of the Metropolis ratio
           logalpha <- (logPrior1+logL1) - (logPrior0+logL0) 
           
           # Accepting or rejecting the candidate vector
-          if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues$af[1] + candidatepValues$as[1] <= 1
-               && candidatepValues$as[1] >= 0 && candidatepValues$af[1] >= 0) {
+          # if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues$af[1] + candidatepValues$as[1] <= 1
+          #      && candidatepValues$as[1] >= 0 && candidatepValues$af[1] >= 0 && candidatepValues$af[2] >= 0 && candidatepValues$af[3] >= 0 && candidatepValues$af[4] >= 0) {
+          if (no.param.par.var < 5) {
+            if ( log(runif(1, min = 0, max =1)) < logalpha 
+                 # && candidatepValues$af[1] + candidatepValues$as[1] <= 1
+                 && (candidatepValues$sr[1]*(nrow(data.set)) + candidatepValues$sr[2]*(nrow(data.set))^2 + candidatepValues$sr[3]*(nrow(data.set))^3 + candidatepValues$sr[4]*(nrow(data.set))^4) >= 0
+                 && (candidatepValues$sf[1]*(nrow(data.set)) + candidatepValues$sf[2]*(nrow(data.set))^2 + candidatepValues$sf[3]*(nrow(data.set))^3 + candidatepValues$sf[4]*(nrow(data.set))^4) >= 0
+                 && (candidatepValues$k[1]*(nrow(data.set)) + candidatepValues$k[2]*(nrow(data.set))^2 + candidatepValues$k[3]*(nrow(data.set))^3 + candidatepValues$k[4]*(nrow(data.set))^4) >= 0
+                 && (candidatepValues$as[1]*(nrow(data.set)) + candidatepValues$as[2]*(nrow(data.set))^2 + candidatepValues$as[3]*(nrow(data.set))^3 + candidatepValues$as[4]*(nrow(data.set))^4) >= 0
+                 && (candidatepValues$af[1]*(nrow(data.set)) + candidatepValues$af[2]*(nrow(data.set))^2 + candidatepValues$af[3]*(nrow(data.set))^3 + candidatepValues$af[4]*(nrow(data.set))^4) >= 0) {
+            # if ( log(runif(1, min = 0, max =1)) < logalpha) {
             pValues <- candidatepValues
             logPrior0 <- logPrior1
             logL0 <- logL1
+            }
+          } else {
+            if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues >= 0 && (candidatepValues$af + candidatepValues$as) < 1) {
+                 # && candidatepValues$sr >= 0
+                 # && candidatepValues$sf >= 0
+                 # && candidatepValues$k >= 0
+                 # && candidatepValues$as >= 0
+                 # && candidatepValues$af >= 0) {
+              pValues <- candidatepValues
+              logPrior0 <- logPrior1
+              logL0 <- logL1
+            }
           }
         }
-        # if (with.storage==T) {
-        #   pChain[c,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,pValues$sf,logL0)
-        # } else {
-        #   pChain[c,] <- c(pValues$Y,pValues$af,pValues$as,pValues$sf,logL0)
-        # }
         if (with.storage==T) {
           pChain[c,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,pValues$sf,pValues$sr,logL0) # Assign the first parameter set with log likelihood
         } else {
@@ -385,11 +404,13 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
         param.final$af = param.set[(1+no.param):(2*no.param)]
         param.final$as = param.set[(1+2*no.param):(3*no.param)]
         param.final$sf = param.set[(1+3*no.param):(4*no.param)]
+        param.final$sr = param.set[(1+4*no.param):(5*no.param)]
         
         param.final$Y_SD = param.SD[1:no.param]
         param.final$af_SD = param.SD[(1+no.param):(2*no.param)]
         param.final$as_SD = param.SD[(1+2*no.param):(3*no.param)]
         param.final$sf_SD = param.SD[(1+3*no.param):(4*no.param)]
+        param.final$sr_SD = param.SD[(1+4*no.param):(5*no.param)]
       }
       
       # Calculate final output set from the predicted parameter set
@@ -406,7 +427,7 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
                                    param.final$k,param.final$af,param.final$as,param.final$sf,param.final$sr)
         } else {
           output.final.set = model.without.storage(no.param,data.set,param.final$Y,
-                                                   param.final$k,param.final$af,param.final$as,param.final$sf,param.final$sr)
+                                                   param.final$af,param.final$as,param.final$sf,param.final$sr)
         }
       } else { # no.param.par.var > 5; monthly parameter setting) 
         if (with.storage==T) {
@@ -414,7 +435,7 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
                                            param.final$k,param.final$af,param.final$as,param.final$sf,param.final$sr)
         } else {
           output.final.set = model.without.storage.monthly(data.set,j,param.final$Y,
-                                                           param.final$k,param.final$af,param.final$as,param.final$sf,param.final$sr)
+                                                           param.final$af,param.final$as,param.final$sf,param.final$sr)
         }
       }
       
@@ -592,12 +613,22 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
       
       # Measured (data) vs Modelled Plant Carbon pools for plotting and comparison
       output.final$Date = data.set$Date
-      names(output.final) = c("Cstorage.modelled","Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Sleaf.modelled","Rm","Rabove","Date")
-      melted.output = melt(output.final[,c("Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Sleaf.modelled","Rm","Rabove","Date")], id.vars="Date")
-      melted.Cstorage = output.final[,c("Cstorage.modelled","Date")]
-      melted.data = melt(data.set[ , c("LM","WM","RM","litter","TNC_leaf","Ra","Date")], id.vars="Date")
+      if (with.storage==T) { 
+        names(output.final) = c("Cstorage.modelled","Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Sleaf.modelled","Rm","Rabove","Date")
+        melted.output = melt(output.final[,c("Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Sleaf.modelled","Rm","Rabove","Date")], id.vars="Date")
+        melted.Cstorage = output.final[,c("Cstorage.modelled","Date")]
+        melted.data = melt(data.set[ , c("LM","WM","RM","litter","TNC_leaf","Ra","Date")], id.vars="Date")
+        melted.error = melt(data.set[ , c("LM_SE","WM_SE","RM_SE","litter_SE","TNC_leaf_SE","Ra_SE","Date")], id.vars="Date")
+        melted.Cstorage$Date = as.Date(melted.Cstorage$Date)
+        melted.Cstorage$treatment = as.factor(treat.group[v])
+        melted.Cstorage$no.param = as.factor(ceiling(no.param.par.var[z]))
+      } else {
+        names(output.final) = c("Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Rm","Rabove","Date")
+        melted.output = melt(output.final[,c("Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Rm","Rabove","Date")], id.vars="Date")
+        melted.data = melt(data.set[ , c("LM","WM","RM","litter","Ra","Date")], id.vars="Date")
+        melted.error = melt(data.set[ , c("LM_SE","WM_SE","RM_SE","litter_SE","Ra_SE","Date")], id.vars="Date")
+      }
       melted.data$Date = as.Date(melted.data$Date)
-      melted.error = melt(data.set[ , c("LM_SE","WM_SE","RM_SE","litter_SE","TNC_leaf_SE","Ra_SE","Date")], id.vars="Date")
       melted.error$Date = as.Date(melted.error$Date)
       melted.error$treatment = as.factor(treat.group[v])
       melted.error$parameter = melted.data$value
@@ -605,9 +636,6 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
       melted.data$treatment = as.factor(treat.group[v])
       melted.output$treatment = as.factor(treat.group[v])
       melted.output$no.param = as.factor(ceiling(no.param.par.var[z]))
-      melted.Cstorage$Date = as.Date(melted.Cstorage$Date)
-      melted.Cstorage$treatment = as.factor(treat.group[v])
-      melted.Cstorage$no.param = as.factor(ceiling(no.param.par.var[z]))
       
       # Storing the summary of data, outputs, Cstorage, parameters
       if (q == 1) {
@@ -663,13 +691,22 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
       # Plotting all parameter whole iterations for Day 1 only to check the convergance
       png(file = paste("output/Parameter_iterations_day1_treatment_",treat.group[v],"_par_",no.param.par.var[z], ".png", sep = ""))
       par(mfrow=c(3,3),oma = c(0, 0, 2, 0))
-      plot(pChain[,1],col="red",main="Utilization coefficient at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="k",ylim=c(param.k[1,1],param.k[1,3]))
-      plot(pChain[,1+no.param],col="green",main="Alloc frac to Biomass at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="Y",ylim=c(param.Y[1,1],param.Y[1,3]))
-      plot(pChain[,1+2*no.param],col="magenta",main="Alloc frac to foliage at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="af",ylim=c(param.af[1,1],param.af[1,3]))
-      plot(pChain[,1+3*no.param],col="blue",main="Alloc frac to wood at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="as",ylim=c(param.as[1,1],param.as[1,3]))
-      plot(pChain[,1+4*no.param],col="green",main="Foliage turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sf",ylim=c(param.sf[1,1],param.sf[1,3]))
-      plot(pChain[,1+5*no.param],col="magenta",main="Root turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sr",ylim=c(param.sr[1,1],param.sr[1,3]))
-      plot(pChain[,1+6*no.param],col="cyan",main="Log-likelihood",cex.lab = 1.5,xlab="Iterations",ylab="Log-likelihood")
+      if (with.storage==T) { 
+        plot(pChain[,1],col="red",main="Utilization coefficient at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="k",ylim=c(param.k[1,1],param.k[1,3]))
+        plot(pChain[,1+no.param],col="green",main="Alloc frac to Biomass at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="Y",ylim=c(param.Y[1,1],param.Y[1,3]))
+        plot(pChain[,1+2*no.param],col="magenta",main="Alloc frac to foliage at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="af",ylim=c(param.af[1,1],param.af[1,3]))
+        plot(pChain[,1+3*no.param],col="blue",main="Alloc frac to wood at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="as",ylim=c(param.as[1,1],param.as[1,3]))
+        plot(pChain[,1+4*no.param],col="green",main="Foliage turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sf",ylim=c(param.sf[1,1],param.sf[1,3]))
+        plot(pChain[,1+5*no.param],col="magenta",main="Root turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sr",ylim=c(param.sr[1,1],param.sr[1,3]))
+        plot(pChain[,1+6*no.param],col="cyan",main="Log-likelihood",cex.lab = 1.5,xlab="Iterations",ylab="Log-likelihood")
+      } else {
+        plot(pChain[,1],col="green",main="Alloc frac to Biomass at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="Y",ylim=c(param.Y[1,1],param.Y[1,3]))
+        plot(pChain[,1+no.param],col="magenta",main="Alloc frac to foliage at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="af",ylim=c(param.af[1,1],param.af[1,3]))
+        plot(pChain[,1+2*no.param],col="blue",main="Alloc frac to wood at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="as",ylim=c(param.as[1,1],param.as[1,3]))
+        plot(pChain[,1+3*no.param],col="green",main="Foliage turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sf",ylim=c(param.sf[1,1],param.sf[1,3]))
+        plot(pChain[,1+4*no.param],col="magenta",main="Root turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sr",ylim=c(param.sr[1,1],param.sr[1,3]))
+        plot(pChain[,1+5*no.param],col="cyan",main="Log-likelihood",cex.lab = 1.5,xlab="Iterations",ylab="Log-likelihood")
+      }
       title(main = paste("First day Parameter iterations for treatment group",treat.group[v],"with par",no.param.par.var[z]), outer=TRUE, cex = 1.5)
       dev.off()
       
@@ -683,8 +720,8 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
       
       # data = data[with(data, order(volume)), ]
       # row.names(data) = c(1:nrow(data))
-      # aic.bic[q,1] <- logLikelihood.wtc3(no.param.par.var,data.set,output.final1,model.comparison) # Calculate logLikelihood
-      aic.bic[q,1] <- logLikelihood.wtc3.final(no.param.par.var,data.set,output.final1,model.comparison) # Calculate logLikelihood
+      # aic.bic[q,1] <- logLikelihood.wtc3(no.param.par.var,data.set,output.final1,with.storage,model.comparison) # Calculate logLikelihood
+      aic.bic[q,1] <- logLikelihood.wtc3.final(no.param.par.var,data.set,output.final1,with.storage,model.comparison) # Calculate logLikelihood
       
       k1 = 2 # k = 2 for the usual AIC
       npar = no.param*no.var # npar = total number of parameters in the fitted model
@@ -693,7 +730,7 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
       if (model.comparison==F) {
         n = sum(!is.na(data.set$TNC_leaf)) + sum(!is.na(data.set$LM)) + sum(!is.na(data.set$WM)) + sum(!is.na(data.set$RM)) + sum(!is.na(data.set$litter)) + sum(!is.na(data.set$Ra))
       } else {
-        n = sum(!is.na(data$LM)) + sum(!is.na(data$WM)) + sum(!is.na(data$RM)) + sum(!is.na(data.set$litter)) + sum(!is.na(data.set$Ra))
+        n = sum(!is.na(data.set$LM)) + sum(!is.na(data.set$WM)) + sum(!is.na(data.set$RM)) + sum(!is.na(data.set$litter)) + sum(!is.na(data.set$Ra))
       }
       k2 = log(n) # n being the number of observations for the so-called BIC
       aic.bic[q,3] = -2*aic.bic[q,1] + k2*npar
@@ -784,9 +821,9 @@ model <- function (no.param,data.set,tnc.partitioning,Y,k,af,as,sf,sr) {
       data.set$Rd.coarseroot.mean[i-1]*Mroot[i-1]*data.set$CRratio[i-1] + data.set$Rd.boleroot.mean[i-1]*Mroot[i-1]*data.set$BRratio[i-1]
     
     Cstorage[i] <- Cstorage[i-1] + data.set$GPP[i-1] - Rm[i-1] - k.i*Cstorage[i-1]
-    Sleaf[i] <- Cstorage[i] * tnc.partitioning$average_ratio[1] # 33% of storage goes to leaf (WTC-4 experiment)
-    Swood[i] <- Cstorage[i] * tnc.partitioning$average_ratio[2] # 53% of storage goes to wood (WTC-4 experiment)
-    Sroot[i] <- Cstorage[i] * tnc.partitioning$average_ratio[3] # 14% of storage goes to root (WTC-4 experiment)
+    Sleaf[i] <- Cstorage[i] * tnc.partitioning$foliage[i] 
+    Swood[i] <- Cstorage[i] * tnc.partitioning$wood[i] 
+    Sroot[i] <- Cstorage[i] * tnc.partitioning$root[i] 
     Mlit[i] <- sf.i*Cleaf[i-1] # foliage litter fall
     
     Cleaf[i] <- Cleaf[i-1] + k.i*Cstorage[i-1]*af.i*(1-Y.i) - Mlit[i]
@@ -836,17 +873,21 @@ model.monthly <- function (data.set,j,tnc.partitioning,Y,k,af,as,sf,sr) {
   Croot[1] <- data.set$RM[1] - Sroot[1]
   
   Rabove[1] = data.set$Ra[1]
+  Rm[1] = data.set$Rd.foliage.mean[1]*Mleaf[1] + data.set$Rd.stem.mean[1]*Mwood[1]*data.set$SMratio[1] +
+    data.set$Rd.branch.mean[1]*Mwood[1]*data.set$BMratio[1] +
+    data.set$Rd.fineroot.mean[1]*Mroot[1]*data.set$FRratio[1] + data.set$Rd.intermediateroot.mean[1]*Mroot[1]*data.set$IRratio[1] +
+    data.set$Rd.coarseroot.mean[1]*Mroot[1]*data.set$CRratio[1] + data.set$Rd.boleroot.mean[1]*Mroot[1]*data.set$BRratio[1]
   
   for (i in 2:nrow(data.set)) {
-    Rm[i-1] = data.set$Rd.foliage.mean[i-1]*Mleaf[i-1] + data.set$Rd.stem.mean[i-1]*Mwood[i-1]*data.set$SMratio[i-1] + 
+    Rm[i] = data.set$Rd.foliage.mean[i-1]*Mleaf[i-1] + data.set$Rd.stem.mean[i-1]*Mwood[i-1]*data.set$SMratio[i-1] + 
       data.set$Rd.branch.mean[i-1]*Mwood[i-1]*data.set$BMratio[i-1] + 
       data.set$Rd.fineroot.mean[i-1]*Mroot[i-1]*data.set$FRratio[i-1] + data.set$Rd.intermediateroot.mean[i-1]*Mroot[i-1]*data.set$IRratio[i-1] + 
       data.set$Rd.coarseroot.mean[i-1]*Mroot[i-1]*data.set$CRratio[i-1] + data.set$Rd.boleroot.mean[i-1]*Mroot[i-1]*data.set$BRratio[i-1]
     
     Cstorage[i] <- Cstorage[i-1] + data.set$GPP[i-1] - Rm[i-1] - k[(i-1)-(j[i-1])]*Cstorage[i-1]
-    Sleaf[i] <- Cstorage[i] * tnc.partitioning$average_ratio[1] # 33% of storage goes to leaf (WTC-4 experiment)
-    Swood[i] <- Cstorage[i] * tnc.partitioning$average_ratio[2] # 53% of storage goes to wood (WTC-4 experiment)
-    Sroot[i] <- Cstorage[i] * tnc.partitioning$average_ratio[3] # 14% of storage goes to root (WTC-4 experiment)
+    Sleaf[i] <- Cstorage[i] * tnc.partitioning$foliage[i] # 33% of storage goes to leaf (WTC-4 experiment)
+    Swood[i] <- Cstorage[i] * tnc.partitioning$wood[i] # 53% of storage goes to wood (WTC-4 experiment)
+    Sroot[i] <- Cstorage[i] * tnc.partitioning$root[i] # 14% of storage goes to root (WTC-4 experiment)
     Mlit[i] <- sf[(i-1)-(j[i-1])]*Cleaf[i-1] # foliage litter fall
     
     Cleaf[i] <- Cleaf[i-1] + k[(i-1)-(j[i-1])]*Cstorage[i-1]*af[(i-1)-(j[i-1])]*(1-Y[(i-1)-(j[i-1])]) - Mlit[i]
@@ -864,10 +905,10 @@ model.monthly <- function (data.set,j,tnc.partitioning,Y,k,af,as,sf,sr) {
     Rabove[i] = data.set$Rd.foliage.mean[i]*Mleaf[i] + data.set$Rd.stem.mean[i]*Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*Mwood[i]*data.set$BMratio[i] +
       Y[(i-1)-(j[i-1])]*(Mleaf[i]-Mleaf[i-1] + Mwood[i]-Mwood[i-1])
   }
-  Rm[i] = data.set$Rd.foliage.mean[i]*Mleaf[i] + data.set$Rd.stem.mean[i]*Mwood[i]*data.set$SMratio[i] + 
-    data.set$Rd.branch.mean[i]*Mwood[i]*data.set$BMratio[i] + 
-    data.set$Rd.fineroot.mean[i]*Mroot[i]*data.set$FRratio[i] + data.set$Rd.intermediateroot.mean[i]*Mroot[i]*data.set$IRratio[i] + 
-    data.set$Rd.coarseroot.mean[i]*Mroot[i]*data.set$CRratio[i] + data.set$Rd.boleroot.mean[i]*Mroot[i]*data.set$BRratio[i]
+  # Rm[i] = data.set$Rd.foliage.mean[i]*Mleaf[i] + data.set$Rd.stem.mean[i]*Mwood[i]*data.set$SMratio[i] + 
+  #   data.set$Rd.branch.mean[i]*Mwood[i]*data.set$BMratio[i] + 
+  #   data.set$Rd.fineroot.mean[i]*Mroot[i]*data.set$FRratio[i] + data.set$Rd.intermediateroot.mean[i]*Mroot[i]*data.set$IRratio[i] + 
+  #   data.set$Rd.coarseroot.mean[i]*Mroot[i]*data.set$CRratio[i] + data.set$Rd.boleroot.mean[i]*Mroot[i]*data.set$BRratio[i]
   
   Mlit = cumsum(Mlit)
   output = data.frame(Cstorage,Mleaf,Mwood,Mroot,Mlit,Sleaf,Rm,Rabove)
@@ -891,18 +932,24 @@ model.monthly <- function (data.set,j,tnc.partitioning,Y,k,af,as,sf,sr) {
 
 # Defining the model to iteratively calculate Cleaf, Cwood, Croot
 model.without.storage <- function (no.param,data.set,Y,af,as,sf,sr) {
-  Mleaf = Mwood = Mroot = Mlit = Rm = Y.modelled = c()
+  Mleaf = Mwood = Mroot = Mlit = Rm = Y.modelled = Rabove = c()
   Mleaf[1] <- data.set$LM[1]
   Mwood[1] <- data.set$WM[1]
   Mroot[1] <- data.set$RM[1]
   Mlit[1] <- data.set$litter[1]
   
-  Y.modelled = Y[1];
+  Rabove[1] = data.set$Ra[1]
+  Rm[1] = data.set$Rd.foliage.mean[1]*Mleaf[1] + data.set$Rd.stem.mean[1]*Mwood[1]*data.set$SMratio[1] +
+    data.set$Rd.branch.mean[1]*Mwood[1]*data.set$BMratio[1] +
+    data.set$Rd.fineroot.mean[1]*Mroot[1]*data.set$FRratio[1] + data.set$Rd.intermediateroot.mean[1]*Mroot[1]*data.set$IRratio[1] +
+    data.set$Rd.coarseroot.mean[1]*Mroot[1]*data.set$CRratio[1] + data.set$Rd.boleroot.mean[1]*Mroot[1]*data.set$BRratio[1]
+  
+  # Y.modelled = Y[1];
   if (no.param == 1) {
     Y.i = Y[1]; af.i = af[1]; as.i = as[1]; sf.i = sf[1]; sr.i = sr[1]
   }
   
-  for (i in 2:length(GPP)) {
+  for (i in 2:nrow(data.set)) {
     if (no.param == 2) {
       Y.i = Y[1]+ Y[2]*i; af.i = af[1]+ af[2]*i; as.i = as[1]+ as[2]*i; sf.i = sf[1]+ sf[2]*i; sr.i = sr[1]+ sr[2]*i
     }
@@ -911,28 +958,25 @@ model.without.storage <- function (no.param,data.set,Y,af,as,sf,sr) {
       sr.i = sr[1]+ sr[2]*i + sr[3]*i*i
     }
     if (no.param == 4) {
-      k.i = k[1] + k[2]*i + k[3]*i*i + k[4]*i*i*i; Y.i = Y[1]+ Y[2]*i + Y[3]*i*i + Y[4]*i*i*i; af.i = af[1]+ af[2]*i + af[3]*i*i + af[4]*i*i*i; 
-      as.i = as[1]+ as[2]*i + as[3]*i*i + as[4]*i*i*i; sf.i = sf[1]+ sf[2]*i + sf[3]*i*i + sf[4]*i*i*i; sr.i = sr[1]+ sr[2]*i + sr[3]*i*i + sr[4]*i*i*i
+      Y.i = Y[1]+ Y[2]*i + Y[3]*i*i + Y[4]*i*i*i; af.i = af[1]+ af[2]*i + af[3]*i*i + af[4]*i*i*i; as.i = as[1]+ as[2]*i + as[3]*i*i + as[4]*i*i*i; 
+      sf.i = sf[1]+ sf[2]*i + sf[3]*i*i + sf[4]*i*i*i; sr.i = sr[1]+ sr[2]*i + sr[3]*i*i + sr[4]*i*i*i
     }
-    Rm[i-1] = data.set$Rd.foliage.mean[i-1]*Mleaf[i-1] + data.set$Rd.stem.mean[i-1]*Mwood[i-1]*data.set$SMratio[i-1] + 
+    Rm[i] = data.set$Rd.foliage.mean[i-1]*Mleaf[i-1] + data.set$Rd.stem.mean[i-1]*Mwood[i-1]*data.set$SMratio[i-1] + 
       data.set$Rd.branch.mean[i-1]*Mwood[i-1]*data.set$BMratio[i-1] + 
       data.set$Rd.fineroot.mean[i-1]*Mroot[i-1]*data.set$FRratio[i-1] + data.set$Rd.intermediateroot.mean[i-1]*Mroot[i-1]*data.set$IRratio[i-1] + 
       data.set$Rd.coarseroot.mean[i-1]*Mroot[i-1]*data.set$CRratio[i-1] + data.set$Rd.boleroot.mean[i-1]*Mroot[i-1]*data.set$BRratio[i-1]
     
-    Mlit[i] <- sf[(i-1)-(j[i-1])]*Mleaf[i-1] # foliage litter fall
+    Mlit[i] <- sf.i*Mleaf[i-1] # foliage litter fall
     Mleaf[i] <- Mleaf[i-1] + (data.all$GPP[i-1] - Rm[i-1]) * af.i*(1-Y.i) - Mlit[i]
     Mwood[i] <- Mwood[i-1] + (data.all$GPP[i-1] - Rm[i-1]) * as.i*(1-Y.i)
     Mroot[i] <- Mroot[i-1] + (data.all$GPP[i-1] - Rm[i-1]) * (1-af.i-as.i)*(1-Y.i) - sr.i*Mroot[i-1]
     
-    Y.modelled[i] = Y.i
+    # Y.modelled[i] = Y.i
+    Rabove[i] = data.set$Rd.foliage.mean[i-1]*Mleaf[i-1] + data.set$Rd.stem.mean[i-1]*Mwood[i-1]*data.set$SMratio[i-1] + data.set$Rd.branch.mean[i-1]*Mwood[i-1]*data.set$BMratio[i-1] +
+      Y.i*(Mleaf[i]-Mleaf[i-1] + Mwood[i]-Mwood[i-1])
   }
-  Rm[i] = data.set$Rd.foliage.mean[i]*Mleaf[i] + data.set$Rd.stem.mean[i]*Mwood[i]*data.set$SMratio[i] + 
-    data.set$Rd.branch.mean[i]*Mwood[i]*data.set$BMratio[i] + 
-    data.set$Rd.fineroot.mean[i]*Mroot[i]*data.set$FRratio[i] + data.set$Rd.intermediateroot.mean[i]*Mroot[i]*data.set$IRratio[i] + 
-    data.set$Rd.coarseroot.mean[i]*Mroot[i]*data.set$CRratio[i] + data.set$Rd.boleroot.mean[i]*Mroot[i]*data.set$BRratio[i]
-  
   Mlit = cumsum(Mlit)
-  output = data.frame(Mleaf,Mwood,Mroot,Mlit,Rm,Y.modelled)
+  output = data.frame(Mleaf,Mwood,Mroot,Mlit,Rm,Rabove)
   return(output)
 }
 
@@ -942,11 +986,17 @@ model.without.storage <- function (no.param,data.set,Y,af,as,sf,sr) {
 
 # Defining the model to iteratively calculate Cleaf, Cwood, Croot
 model.without.storage.monthly <- function (data.set,j,Y,af,as,sf,sr) {
-  Mleaf = Mwood = Mroot = Mlit = Rm = c()
+  Mleaf = Mwood = Mroot = Mlit = Rm = Rabove = c()
   Mleaf[1] <- data.set$LM[1]
   Mwood[1] <- data.set$WM[1]
   Mroot[1] <- data.set$RM[1]
   Mlit[1] <- data.set$litter[1]
+  
+  Rabove[1] = data.set$Ra[1]
+  Rm[1] = data.set$Rd.foliage.mean[1]*Mleaf[1] + data.set$Rd.stem.mean[1]*Mwood[1]*data.set$SMratio[1] +
+    data.set$Rd.branch.mean[1]*Mwood[1]*data.set$BMratio[1] +
+    data.set$Rd.fineroot.mean[1]*Mroot[1]*data.set$FRratio[1] + data.set$Rd.intermediateroot.mean[1]*Mroot[1]*data.set$IRratio[1] +
+    data.set$Rd.coarseroot.mean[1]*Mroot[1]*data.set$CRratio[1] + data.set$Rd.boleroot.mean[1]*Mroot[1]*data.set$BRratio[1]
   
   if (no.param == 1) {
     Y.i = Y[1]; af.i = af[1]; as.i = as[1]; sf.i = sf[1]; sr.i = sr[1]
@@ -962,7 +1012,7 @@ model.without.storage.monthly <- function (data.set,j,Y,af,as,sf,sr) {
       sf.i = sf[1]+ sf[2]*i + sf[3]*i*i;
       sr.i = sr[1]+ sr[2]*i + sr[3]*i*i
     }
-    Rm[i-1] = data.set$Rd.foliage.mean[i-1]*Mleaf[i-1] + data.set$Rd.stem.mean[i-1]*Mwood[i-1]*data.set$SMratio[i-1] + 
+    Rm[i] = data.set$Rd.foliage.mean[i-1]*Mleaf[i-1] + data.set$Rd.stem.mean[i-1]*Mwood[i-1]*data.set$SMratio[i-1] + 
       data.set$Rd.branch.mean[i-1]*Mwood[i-1]*data.set$BMratio[i-1] + 
       data.set$Rd.fineroot.mean[i-1]*Mroot[i-1]*data.set$FRratio[i-1] + data.set$Rd.intermediateroot.mean[i-1]*Mroot[i-1]*data.set$IRratio[i-1] + 
       data.set$Rd.coarseroot.mean[i-1]*Mroot[i-1]*data.set$CRratio[i-1] + data.set$Rd.boleroot.mean[i-1]*Mroot[i-1]*data.set$BRratio[i-1]
@@ -971,14 +1021,17 @@ model.without.storage.monthly <- function (data.set,j,Y,af,as,sf,sr) {
     Mleaf[i] <- Mleaf[i-1] + (data.all$GPP[i-1] - Rm[i-1]) *af[(i-1)-(j[i-1])]*(1-Y[(i-1)-(j[i-1])]) - Mlit[i]
     Mwood[i] <- Mwood[i-1] + (data.all$GPP[i-1] - Rm[i-1]) *as[(i-1)-(j[i-1])]*(1-Y[(i-1)-(j[i-1])])
     Mroot[i] <- Mroot[i-1] + (data.all$GPP[i-1] - Rm[i-1]) *(1-af[(i-1)-(j[i-1])]-as[(i-1)-(j[i-1])])*(1-Y[(i-1)-(j[i-1])]) - sr[(i-1)-(j[i-1])]*Mroot[i-1]
+    
+    Rabove[i] = data.set$Rd.foliage.mean[i]*Mleaf[i] + data.set$Rd.stem.mean[i]*Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*Mwood[i]*data.set$BMratio[i] +
+      Y[(i-1)-(j[i-1])]*(Mleaf[i]-Mleaf[i-1] + Mwood[i]-Mwood[i-1])
   }
-  Rm[i] = data.set$Rd.foliage.mean[i]*Mleaf[i] + data.set$Rd.stem.mean[i]*Mwood[i]*data.set$SMratio[i] + 
-    data.set$Rd.branch.mean[i]*Mwood[i]*data.set$BMratio[i] + 
-    data.set$Rd.fineroot.mean[i]*Mroot[i]*data.set$FRratio[i] + data.set$Rd.intermediateroot.mean[i]*Mroot[i]*data.set$IRratio[i] + 
-    data.set$Rd.coarseroot.mean[i]*Mroot[i]*data.set$CRratio[i] + data.set$Rd.boleroot.mean[i]*Mroot[i]*data.set$BRratio[i]
+  # Rm[i] = data.set$Rd.foliage.mean[i]*Mleaf[i] + data.set$Rd.stem.mean[i]*Mwood[i]*data.set$SMratio[i] + 
+  #   data.set$Rd.branch.mean[i]*Mwood[i]*data.set$BMratio[i] + 
+  #   data.set$Rd.fineroot.mean[i]*Mroot[i]*data.set$FRratio[i] + data.set$Rd.intermediateroot.mean[i]*Mroot[i]*data.set$IRratio[i] + 
+  #   data.set$Rd.coarseroot.mean[i]*Mroot[i]*data.set$CRratio[i] + data.set$Rd.boleroot.mean[i]*Mroot[i]*data.set$BRratio[i]
   
   Mlit = cumsum(Mlit)
-  output = data.frame(Mleaf,Mwood,Mroot,Mlit,Rm)
+  output = data.frame(Mleaf,Mwood,Mroot,Mlit,Rm,Rabove)
   return(output)
 }
 
@@ -993,14 +1046,19 @@ model.without.storage.monthly <- function (data.set,j,Y,af,as,sf,sr) {
 ################ Figure 4 #####################
 # Plot modelled parameters with 3 Grouped treatments and quadratic parameter setting
 #-------------------------------------------------------------------------------------
-plot.Modelled.parameters <- function(result) { 
-  cbPalette = c("gray", "orange", "skyblue", "green3", "yellow3", "#0072B2", "#D55E00")
+plot.Modelled.parameters <- function(result,with.storage) { 
+  # cbPalette = c("gray", "skyblue", "orange", "green3", "yellow3", "#0072B2", "#D55E00")
+  cbPalette = c("darkorange", "cyan", "firebrick", "deepskyblue3")
   i = 0
   font.size = 10
   plot = list() 
-  var = as.factor(c("k","Y","af","as","ar","sf","sr"))
-  # var = as.factor(c("Y","af","as","ar","sf"))
-  title = as.character(c("A","B","C","D","E","F","G"))
+  if (with.storage==T) { 
+    var = as.factor(c("k","Y","af","as","ar","sf","sr"))
+    title = as.character(c("A","B","C","D","E","F","G"))
+  } else {
+    var = as.factor(c("Y","af","as","ar","sf","sr"))
+    title = as.character(c("A","B","C","D","E","F"))
+  }
   pd <- position_dodge(0.5)
   no.param.par.var = result[[1]]
   summary.param = result[[2]]
@@ -1020,47 +1078,73 @@ plot.Modelled.parameters <- function(result) {
         # ylab(paste(as.character(var[p]),"(fraction)")) +
         ylab(paste(as.character(var[p]))) +
         labs(colour="Treatment") +
-        scale_color_manual(values=cbPalette[2:5]) +
+        scale_color_manual(values=cbPalette[1:4]) +
         scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-2*max(summary.param.set.limit$Parameter_SD),
                                       max(summary.param.set.limit$Parameter)+2*max(summary.param.set.limit$Parameter_SD))) +
         annotate("text", x = min(summary.param.set$Date), y = max(summary.param.set$Parameter) + 2*max(summary.param.set$Parameter_SD), size = font.size-7, label = paste(title[p])) +
         theme_bw() +
         theme(legend.title = element_text(colour="black", size=font.size)) +
         theme(legend.text = element_text(colour="black", size=font.size-3)) +
-        theme(legend.position = c(0.65,0.87)) +
+        theme(legend.position = c(0.65,0.85)) +
         theme(legend.key = element_blank()) +
         theme(text = element_text(size=font.size)) +
         theme(axis.title.x = element_blank()) +
         theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
       
-      if (p==1) {
-        # plot[[i]] = plot[[i]] + scale_colour_manual(name="", breaks=c("1", "2", "3"),
-        #                                             labels=c("Small", "Large", "Free"), values=cbPalette[2:4]) +
-        plot[[i]] = plot[[i]] + scale_colour_manual(name="", values=cbPalette[2:5]) +
-          ylab(expression(k~"(g C "*g^"-1"*" C "*d^"-1"*")"))
-        plot[[i]] = plot[[i]] + theme(legend.key.height=unit(0.7,"line"))
-      } else if (p>1) {
-        plot[[i]] = plot[[i]] + guides(colour=FALSE)
-      } 
-      if (p==2) {
-        plot[[i]] = plot[[i]] + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 0.8), units="line"))
-      }
-      if (p==3) {
-        # plot[[i]] = plot[[i]] + ylab(expression(a[f]~"(fraction)")) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
-        plot[[i]] = plot[[i]] + ylab(expression(a[f])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
-      }
-      if (p==4) {
-        plot[[i]] = plot[[i]] + ylab(expression(a[w])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
-      }
-      if (p==5) {
-        plot[[i]] = plot[[i]] + ylab(expression(a[r])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
-      }
-      if (p==6) {
-        plot[[i]] = plot[[i]] + ylab(expression(s[f]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
-      }
-      if (p==7) {
-        plot[[i]] = plot[[i]] + ylab(expression(s[r]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+      if (with.storage==T) { 
+        if (p==1) {
+          # plot[[i]] = plot[[i]] + scale_colour_manual(name="", breaks=c("1", "2", "3"),
+          #                                             labels=c("Small", "Large", "Free"), values=cbPalette[2:4]) +
+          plot[[i]] = plot[[i]] + scale_colour_manual(name="", values=cbPalette[1:4]) +
+            ylab(expression(k~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+          plot[[i]] = plot[[i]] + theme(legend.key.height=unit(0.7,"line"))
+        } else if (p>1) {
+          plot[[i]] = plot[[i]] + guides(colour=FALSE)
+        } 
+        if (p==2) {
+          plot[[i]] = plot[[i]] + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 0.8), units="line"))
+        }
+        if (p==3) {
+          # plot[[i]] = plot[[i]] + ylab(expression(a[f]~"(fraction)")) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
+          plot[[i]] = plot[[i]] + ylab(expression(a[f])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
+        }
+        if (p==4) {
+          plot[[i]] = plot[[i]] + ylab(expression(a[w])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
+        }
+        if (p==5) {
+          plot[[i]] = plot[[i]] + ylab(expression(a[r])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
+        }
+        if (p==6) {
+          plot[[i]] = plot[[i]] + ylab(expression(s[f]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+        }
+        if (p==7) {
+          plot[[i]] = plot[[i]] + ylab(expression(s[r]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+        }
+        
+      } else {
+        if (p==1) {
+          plot[[i]] = plot[[i]] + scale_colour_manual(name="", values=cbPalette[1:4])
+          plot[[i]] = plot[[i]] + theme(legend.key.height=unit(0.7,"line"))
+        } else if (p>1) {
+          plot[[i]] = plot[[i]] + guides(colour=FALSE)
+        } 
+        if (p==2) {
+          plot[[i]] = plot[[i]] + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 0.8), units="line"))
+          plot[[i]] = plot[[i]] + ylab(expression(a[f])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
+        }
+        if (p==3) {
+          plot[[i]] = plot[[i]] + ylab(expression(a[w])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
+        }
+        if (p==4) {
+          plot[[i]] = plot[[i]] + ylab(expression(a[r])) + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 1), units="line"))
+        }
+        if (p==5) {
+          plot[[i]] = plot[[i]] + ylab(expression(s[f]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+        }
+        if (p==6) {
+          plot[[i]] = plot[[i]] + ylab(expression(s[r]~"(g C "*g^"-1"*" C "*d^"-1"*")"))
+        }
       }
     }
   }
@@ -1080,8 +1164,9 @@ plot.Modelled.parameters <- function(result) {
 ################ Figure 5 #####################
 # Plot Daily analysis (lines) with optimum parameter setting and intermittent observations (symbols) of selected carbon stocks
 #-------------------------------------------------------------------------------------
-plot.Modelled.biomass <- function(result) { 
-  cbPalette = c("gray", "orange", "skyblue", "green3", "yellow3", "#0072B2", "#D55E00")
+plot.Modelled.biomass <- function(result,with.storage) { 
+  # cbPalette = c("gray", "skyblue", "orange", "green3", "yellow3", "#0072B2", "#D55E00")
+  cbPalette = c("darkorange", "cyan", "firebrick", "deepskyblue3")
   i = 0
   font.size = 10
   plot = list() 
@@ -1090,10 +1175,17 @@ plot.Modelled.biomass <- function(result) {
   summary.data = result[[3]]
   summary.output = result[[4]]
   summary.error = result[[5]]
-  meas = as.factor(c("LM","WM","RM","litter","TNC_leaf","Ra"))
-  res = as.factor(c("Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Sleaf.modelled","Rabove"))
-  error = as.factor(c("LM_SE","WM_SE","RM_SE","litter_SE","TNC_leaf_SE","Ra_SE"))
-  title = as.character(c("A","B","C","D","E","F"))
+  if (with.storage==T) { 
+    meas = as.factor(c("LM","WM","RM","litter","TNC_leaf","Ra"))
+    res = as.factor(c("Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Sleaf.modelled","Rabove"))
+    error = as.factor(c("LM_SE","WM_SE","RM_SE","litter_SE","TNC_leaf_SE","Ra_SE"))
+    title = as.character(c("A","B","C","D","E","F"))
+  } else {
+    meas = as.factor(c("LM","WM","RM","litter","Ra"))
+    res = as.factor(c("Mleaf.modelled","Mwood.modelled","Mroot.modelled","Mlit.modelled","Rabove"))
+    error = as.factor(c("LM_SE","WM_SE","RM_SE","litter_SE","Ra_SE"))
+    title = as.character(c("A","B","C","D","E"))
+  }
   pd <- position_dodge(2) # move the overlapped errorbars horizontally
   for (p in 1:length(meas)) {
     summary.data.Cpool = subset(summary.data,variable %in% meas[p])
@@ -1104,77 +1196,91 @@ plot.Modelled.biomass <- function(result) {
     # }
     
     i = i + 1
-    if (p==6) {
+    if (meas[p]=="Ra") {
       plot[[i]] = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, group = treatment, colour=treatment)) + 
-      geom_point(position=pd,size=0.3) +
-      # geom_errorbar(position=pd,aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=0.5) +
-      # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,volume.group,no.param), linetype=volume.group, colour=volume, size=no.param)) +
-      # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) +
-      geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = treatment, colour=treatment)) +
-      ylab(paste(as.character(meas[p]),"(g C)")) + xlab("Month") +
-      # ggtitle("C pools - Measured (points) vs Modelled (lines)") +
-      # labs(colour="Soil Volume", linetype="Grouping treatment", size="Total No of Parameter") +
-      # labs(colour="Pot Volume (L)", linetype="No. of Parameters") +
-      labs(colour="Treatment") +
-      scale_color_manual(values=cbPalette[1:4]) +
-      # scale_color_manual(labels = c("Individuals", "One Group"), values = c("blue", "red")) +
-      # coord_trans(y = "log10") + ylab(paste(as.character(meas[p]),"(g C plant-1)")) +
-      theme_bw() +
-      annotate("text", x = max(summary.output.Cpool$Date), y = min(summary.output.Cpool$value), size = font.size-7, label = paste(title[p])) +
-      # theme(plot.title = element_text(size = 20, face = "bold")) +
-      theme(legend.title = element_text(colour="black", size=font.size)) +
-      theme(legend.text = element_text(colour="black", size = font.size-3)) +
-      theme(legend.key.height=unit(0.7,"line")) +
-      theme(legend.position = c(0.25,0.8)) +
-      theme(legend.key = element_blank()) +
-      theme(text = element_text(size=font.size)) +
-      theme(axis.title.x = element_blank()) +
-      theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-      # theme(plot.title = element_text(hjust = 0)) +
-      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-    
+        geom_point(position=pd,size=0.3) +
+        # geom_errorbar(position=pd,aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=0.5) +
+        # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,volume.group,no.param), linetype=volume.group, colour=volume, size=no.param)) +
+        # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) +
+        geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = treatment, colour=treatment)) +
+        ylab(paste(as.character(meas[p]),"(g C)")) + xlab("Month") +
+        # ggtitle("C pools - Measured (points) vs Modelled (lines)") +
+        # labs(colour="Soil Volume", linetype="Grouping treatment", size="Total No of Parameter") +
+        # labs(colour="Pot Volume (L)", linetype="No. of Parameters") +
+        labs(colour="Treatment") +
+        scale_color_manual(values=cbPalette[1:4]) +
+        # scale_color_manual(labels = c("Individuals", "One Group"), values = c("blue", "red")) +
+        # coord_trans(y = "log10") + ylab(paste(as.character(meas[p]),"(g C plant-1)")) +
+        theme_bw() +
+        annotate("text", x = max(summary.output.Cpool$Date), y = min(summary.output.Cpool$value), size = font.size-7, label = paste(title[p])) +
+        theme(legend.title = element_text(colour="black", size=font.size-2)) +
+        theme(legend.text = element_text(colour="black", size = font.size-3)) +
+        theme(legend.key.height=unit(0.6,"line")) +
+        theme(legend.position = c(0.22,0.8)) +
+        theme(legend.key = element_blank()) +
+        theme(text = element_text(size=font.size)) +
+        theme(axis.title.x = element_blank()) +
+        theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+        # theme(plot.title = element_text(hjust = 0)) +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+      
     } else {
-    plot[[i]] = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, group = treatment, colour=treatment)) + 
-      geom_point(position=pd) +
-      geom_errorbar(position=pd,aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=0.5) +
-      # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,volume.group,no.param), linetype=volume.group, colour=volume, size=no.param)) +
-      # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) +
-      geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = treatment, colour=treatment)) +
-      ylab(paste(as.character(meas[p]),"(g C)")) + xlab("Month") +
-      # ggtitle("C pools - Measured (points) vs Modelled (lines)") +
-      # labs(colour="Soil Volume", linetype="Grouping treatment", size="Total No of Parameter") +
-      # labs(colour="Pot Volume (L)", linetype="No. of Parameters") +
-      labs(colour="Treatment") +
-      scale_color_manual(values=cbPalette[1:4]) +
-      # scale_color_manual(labels = c("Individuals", "One Group"), values = c("blue", "red")) +
-      # coord_trans(y = "log10") + ylab(paste(as.character(meas[p]),"(g C plant-1)")) +
-      theme_bw() +
-      annotate("text", x = max(summary.output.Cpool$Date), y = min(summary.output.Cpool$value), size = font.size-7, label = paste(title[p])) +
-      # theme(plot.title = element_text(size = 20, face = "bold")) +
-      theme(legend.title = element_text(colour="black", size=font.size)) +
-      theme(legend.text = element_text(colour="black", size = font.size-3)) +
-      theme(legend.key.height=unit(0.7,"line")) +
-      theme(legend.position = c(0.25,0.8)) +
-      theme(legend.key = element_blank()) +
-      theme(text = element_text(size=font.size)) +
-      theme(axis.title.x = element_blank()) +
-      theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
-      # theme(plot.title = element_text(hjust = 0)) +
-      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+      plot[[i]] = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, group = treatment, colour=treatment)) + 
+        geom_point(position=pd) +
+        geom_errorbar(position=pd,aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=0.5) +
+        # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,volume.group,no.param), linetype=volume.group, colour=volume, size=no.param)) +
+        # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) +
+        geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = treatment, colour=treatment)) +
+        ylab(paste(as.character(meas[p]),"(g C)")) + xlab("Month") +
+        labs(colour="Treatment") +
+        scale_color_manual(values=cbPalette[1:4]) +
+        # scale_color_manual(labels = c("Individuals", "One Group"), values = c("blue", "red")) +
+        # coord_trans(y = "log10") + ylab(paste(as.character(meas[p]),"(g C plant-1)")) +
+        theme_bw() +
+        annotate("text", x = max(summary.output.Cpool$Date), y = min(summary.output.Cpool$value), size = font.size-7, label = paste(title[p])) +
+        # theme(plot.title = element_text(size = 20, face = "bold")) +
+        theme(legend.title = element_text(colour="black", size=font.size-2)) +
+        theme(legend.text = element_text(colour="black", size = font.size-3)) +
+        theme(legend.key.height=unit(0.6,"line")) +
+        theme(legend.position = c(0.22,0.8)) +
+        theme(legend.key = element_blank()) +
+        theme(text = element_text(size=font.size)) +
+        theme(axis.title.x = element_blank()) +
+        theme(axis.title.y = element_text(size = font.size, vjust=0.3)) +
+        # theme(plot.title = element_text(hjust = 0)) +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
     }
-    # if (p==1) {
-    #   plot[[i]] = plot[[i]] + scale_y_log10(breaks=c(.5,1,2,5,10,20),labels=c(.5,1,2,5,10,20)) + ylab(expression(C["t,f"]~"(g C "*plant^"-1"*")")) +
-    #     scale_colour_manual(name="Treatments", values=cbPalette[1:4])
-    #   plot[[i]] = plot[[i]]  + theme(legend.key.height=unit(0.7,"line"))
-    #   
-    # } else if (p==2) {
-    #   plot[[i]] = plot[[i]] + scale_y_log10(breaks=c(.5,1,2,5,10,20),labels=c(.5,1,2,5,10,20)) + ylab(expression(C["t,w"]~"(g C "*plant^"-1"*")"))
-    #   plot[[i]] = plot[[i]] + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 0.75), units="line"))
-    # } else if (p==3) {
-    #   plot[[i]] = plot[[i]] + scale_y_log10(breaks=c(.5,1,2,5,10,20,40),labels=c(.5,1,2,5,10,20,40)) + ylab(expression(C["t,r"]~"(g C "*plant^"-1"*")"))
-    # } else {
-    #   plot[[i]] = plot[[i]] + scale_y_log10(breaks=c(.05,.1,.2,.5,1,2),labels=c(.05,.1,.2,.5,1,2)) + ylab(expression(C["n,f"]~"(g C "*plant^"-1"*")"))
-    # }
+    if (with.storage==T) {
+      if (p==1) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["t,f"]~"(g C "*plant^"-1"*")"))
+        # plot[[i]] = plot[[i]]  + theme(legend.key.height=unit(0.6,"line"))
+      } else if (p==2) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["t,w"]~"(g C "*plant^"-1"*")"))
+        # plot[[i]] = plot[[i]] + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 0.75), units="line"))
+      } else if (p==3) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["t,r"]~"(g C "*plant^"-1"*")"))
+      } else if (p==4) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["f,lit"]~"(g C "*plant^"-1"*")"))
+      } else if (p==5) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["n,f"]~"(g C "*plant^"-1"*")"))
+      } else {
+        plot[[i]] = plot[[i]] + ylab(expression(R[a]~"(g C "*plant^"-1"*")"))
+      }
+    } else {
+      if (p==1) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["t,f"]~"(g C "*plant^"-1"*")"))
+        # plot[[i]] = plot[[i]]  + theme(legend.key.height=unit(0.6,"line"))
+      } else if (p==2) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["t,w"]~"(g C "*plant^"-1"*")"))
+        # plot[[i]] = plot[[i]] + theme(plot.margin=unit(c(0.4, 0.4, 0.4, 0.75), units="line"))
+      } else if (p==3) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["t,r"]~"(g C "*plant^"-1"*")"))
+      } else if (p==4) {
+        plot[[i]] = plot[[i]] + ylab(expression(C["f,lit"]~"(g C "*plant^"-1"*")"))
+      } else {
+        plot[[i]] = plot[[i]] + ylab(expression(R[a]~"(g C "*plant^"-1"*")"))
+      }
+    }
     if (p>1) {
       plot[[i]] = plot[[i]] + guides(colour=FALSE)
     }

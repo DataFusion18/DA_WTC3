@@ -19,8 +19,8 @@ summary(aov(Rbranch ~ T_treatment * chamber_type, data = branch.resp)) # YES, th
 ############ So how to group the treatments????????
 rd15.root <- summaryBy(Rbranch ~ T_treatment, data=branch.resp, FUN=c(mean))
 names(rd15.root)[ncol(rd15.root)] = c("rd15.coarseroot")
-# rd15.root$rd15.coarseroot = rd15.root$rd15.coarseroot * (10^-9 * 12) * (3600 * 24) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
-rd15.root$rd15.coarseroot = rd15.root$rd15.coarseroot * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+rd15.root$rd15.coarseroot = rd15.root$rd15.coarseroot * (10^-9 * 12) * (3600 * 24) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+# rd15.root$rd15.coarseroot = rd15.root$rd15.coarseroot * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
 # rd15.coarseroot$rd15.coarseroot_SE = rd15.coarseroot$rd15.coarseroot_SE * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
 
 # Bole and big tap root respiration rates
@@ -37,13 +37,13 @@ summary(aov(R_stem_nmol ~ T_treatment * chamber_type, data = bole.resp)) # NO, t
 # t.test(bole.resp$R_stem_nmol ~ bole.resp$chamber_type) # NO, there is no significant difference accross drought/watered treatments
 
 rd15.root$rd15.boleroot = mean(bole.resp$R_stem_nmol)
-# rd15.root$rd15.boleroot = rd15.root$rd15.boleroot * (10^-9 * 12) * (3600 * 24) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
-rd15.root$rd15.boleroot = rd15.root$rd15.boleroot * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+rd15.root$rd15.boleroot = rd15.root$rd15.boleroot * (10^-9 * 12) * (3600 * 24) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+# rd15.root$rd15.boleroot = rd15.root$rd15.boleroot * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
 
 # Fine root respiration rates (Constant)
 # Fine root respiration rate = 10 nmolCO2 g-1 s-1 (Ref: Drake et al. 2017: GREAT exp data; Mark's Email)
-# rd25.fineroot = 10 * (10^-9 * 12) * (3600 * 24) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
-rd25.fineroot = 10 * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+rd25.fineroot = 10 * (10^-9 * 12) * (3600 * 24) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
+# rd25.fineroot = 10 * (10^-9 * 12) * (3600 * 24) * (1/c1) # unit conversion from nmolCO2 g-1 s-1 to gC gC-1 d-1
 rd15.root$rd15.fineroot = rd25.fineroot * q10^((15-25)/10)
 
 # Intermediate root respiration rates

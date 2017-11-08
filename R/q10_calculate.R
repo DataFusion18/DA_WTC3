@@ -42,6 +42,7 @@ predRleaf_ele <- exp(log(rd25_ele) + (log(q10) * (xvals_Rleaf-25)/10))
 #----------------------------------------------------------------------------------------------------------------
 #- plot Rleaf vs. Tair
 rvt.treat <- summaryBy(Rmass~Date+T_treatment+Tleaf_bin_mid,data=rvt.treat.bin,keep.names=F,FUN=c(mean,standard.error))
+png("output/5.Rdark_vs_T.png", units="px", width=1200, height=1000, res=130)
 par(mfrow=c(1,1), mar = c(4,4.5,0.2,0.2))
 xlims=c(18,40)
 
@@ -56,5 +57,5 @@ lines(x=xvals_Rleaf,y=predRleaf_amb,col="black",lwd=2)
 lines(x=xvals_Rleaf,y=predRleaf_ele,col="red",lwd=2)
 legend("topleft",legend=unique(rvt.treat$T_treatment),col=c('black','red'),lty=1,bty="n",cex=0.8,pt.cex=1.2)
 
-dev.copy2pdf(file="output/5.Rdark_vs_T.pdf")
-
+# dev.copy2pdf(file="output/5.Rdark_vs_T.pdf")
+dev.off()
