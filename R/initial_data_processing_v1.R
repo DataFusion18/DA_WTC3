@@ -9,12 +9,19 @@
 # Clear the workspace (if needed)
 rm(list=ls())
 
-#- Load required libraries. There are quite a few (>20), including some non-standard functions that
-#    are not on CRAN. This script will check for required libraries and install any that are missing.
-source("R/loadLibraries_WTC3.R")
+# - Load required libraries. There are quite a few (>20), including some non-standard functions that
+# #    are not on CRAN. This script will check for required libraries and install any that are missing.
+# source("R/loadLibraries_WTC3.R")
+# 
+# #- load the custom analysis and plotting functions that do all of the actual work
+# source("R/functions_WTC3.R")
 
-#- load the custom analysis and plotting functions that do all of the actual work
-source("R/functions_WTC3.R")
+# This script will check for required libraries and install any that are missing	
+source('R/load_packages_wtc3.R')	
+
+# Load the custom analysis and plotting functions that do all of the actual work	
+source("R/functions_wtc3.R")	
+source("R/functions_wtc3_CBM.R")	
 
 #-----------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------

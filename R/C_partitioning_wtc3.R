@@ -74,18 +74,19 @@ if (no.param.par.var < 5) {
 data.part = data.part[with(data.part, order(treatment,Date)), ]
 # data.set = data.part[data.part$Date <= as.Date("2013-05-21"), ]
 for (v in 1:length(treat.group)) {
-  Ct.group$GPP[v] = sum ( data.part$GPP[which(data.part$treatment == treat.group[v])] )
-  Ct.group$Rm[v] = sum ( data.part$Rm[which(data.part$treatment == treat.group[v])] )
-  Ct.group$Cs[v] = data.part$Cs[which(data.part$treatment == treat.group[v] & data.part$Date == as.Date("2014-05-26"))]
-  Ct.group[v, c(5:7)] = data.part[which(data.part$treatment == treat.group[v] & data.part$Date == as.Date("2014-05-26")), 8:6] - data.part[which(data.part$treatment == treat.group[v] & data.part$Date == as.Date("2013-09-17")), 8:6]
-  Ct.group$Cflit[v] = data.part[which(data.part$treatment == treat.group[v] & data.part$Date == as.Date("2014-05-26")), 9]
-  Ct.group$Crlit[v] = sum ( data.part$sr [which(data.part$treatment == treat.group[v])] * data.part$Mroot.modelled [which(data.part$treatment == treat.group[v])])
+  Ct.group$GPP[v] = sum ( data.part$GPP[which(data.part$treatment %in% treat.group[v])] )
+  Ct.group$Rm[v] = sum ( data.part$Rm[which(data.part$treatment %in% treat.group[v])] )
+  Ct.group$Cs[v] = data.part$Cs[which(data.part$treatment %in% treat.group[v] & data.part$Date %in% as.Date("2014-05-26"))]
+  Ct.group[v, c(5:7)] = data.part[which(data.part$treatment %in% treat.group[v] & data.part$Date %in% as.Date("2014-05-26")), 8:6] - data.part[which(data.part$treatment %in% treat.group[v] & data.part$Date %in% as.Date("2013-09-17")), 8:6]
+  Ct.group$Cflit[v] = data.part[which(data.part$treatment %in% treat.group[v] & data.part$Date %in% as.Date("2014-05-26")), 9]
+  Ct.group$Crlit[v] = sum ( data.part$sr [which(data.part$treatment %in% treat.group[v])] * data.part$Mroot.modelled [which(data.part$treatment %in% treat.group[v])])
   Ct.group$Rg[v] = Ct.group$GPP[v] - sum(Ct.group[v,c(3:9)])
 }
 
 Ct.fraction.group = Ct.group[, c(2:9)]
 Ct.fraction.group[,] = Ct.fraction.group[,] / Ct.group[, 1] * 100
-row.names(Ct.fraction.group) <- c("amb-dry","amb-wet","warm-dry","warm-wet")
+# row.names(Ct.fraction.group) <- c("amb-dry","amb-wet","warm-dry","warm-wet")
+row.names(Ct.fraction.group) <- c("amb-wet","warm-wet")
 
 Ct.group$treatment = treat.group
 colnames(Ct.group) <- c("GPP (g C)", "Rg (g C)", "Rm (g C)", "Cs (g C)", "Cr (g C)", "Cw (g C)", "Cf (g C)", "Cflit (g C)", "Crlit (g C)", "Treatment")

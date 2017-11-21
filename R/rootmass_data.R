@@ -58,6 +58,7 @@ eq.rm = function(x,y){exp(coefficients(rm2)[1] + coefficients(rm2)[2] * log(x)  
 
 # estimate the initial rootmass from H and D data
 height.dia.initial = subset(height.dia.final, Date %in% as.Date("2013-09-17"))
+# height.dia.initial = subset(height.dia.final, Date %in% as.Date("2014-02-04"))
 height.dia.initial$RM = eq.rm(height.dia.initial$diameter, height.dia.initial$height)
 # height.dia.initial$RM_SE = (((height.dia.initial$diameter_SE/height.dia.initial$diameter)^2 + (height.dia.initial$height_SE/height.dia.initial$height)^2 )^0.5) * height.dia.initial$RM
 height.dia.initial$RM_SE = ( (((coefficients(rm2)[2]*height.dia.initial$diameter_SE/height.dia.initial$diameter)^2 + (coefficients(rm2)[3]*height.dia.initial$height_SE/height.dia.initial$height)^2 +

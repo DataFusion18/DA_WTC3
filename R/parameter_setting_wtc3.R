@@ -5,7 +5,7 @@ param.Y <- matrix(c(0.2,0.3,0.4) , nrow=1, ncol=3, byrow=T)
 param.af <- matrix(c(0,0.5,1) , nrow=1, ncol=3, byrow=T) # Forcing af not to be negetive
 param.as <- matrix(c(0,0.5,1) , nrow=1, ncol=3, byrow=T)
 param.sf <- matrix(c(0,0.0005,0.001) , nrow=1, ncol=3, byrow=T) # All Groups having same sf
-param.sr <- matrix(c(0,0.0005,0.001) , nrow=1, ncol=3, byrow=T) # All Groups having same sr
+param.sr <- matrix(c(0,0.005,0.01) , nrow=1, ncol=3, byrow=T) # All Groups having same sr
 
 # # wide ranges (didn't work)
 # param.Y <- matrix(c(0,0.3,1) , nrow=1, ncol=3, byrow=T)

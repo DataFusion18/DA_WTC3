@@ -32,12 +32,12 @@ source("R/functions_wtc3_CBM.R")
 
 #-------------------------------------------------------------------------------------
 
-# #-------------------------------------------------------------------------------------
-# #- This script imports and processes the raw WTC3 experiment data to model the carbon pools and fluxes using DA
-# # source("R/initial_data_processing_wtc3.R")
-# rmd2rscript("report_initial_data_processing_wtc3.Rmd")
-# source("report_initial_data_processing_wtc3.R")
-# #-------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------
+#- This script imports and processes the raw WTC3 experiment data to model the carbon pools and fluxes using DA
+# source("R/initial_data_processing_wtc3.R")
+rmd2rscript("report_initial_data_processing_wtc3.Rmd")
+source("report_initial_data_processing_wtc3.R")
+#-------------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------------
 # #- Make figure 1. Model representation of storage, allocation and autotrophic respiration processes and 
@@ -53,19 +53,39 @@ source("R/functions_wtc3_CBM.R")
 
 # Model run for WTC3 dataset (without LA feedback)
 # treat.group = as.factor(c("ambient watered")) # Assign 1 treatment to check the model
-# treat.group = as.factor(c("ambient drought","elevated drought")) # Assign 1 treatment to check the model
+# treat.group = as.factor(c("ambient watered","elevated watered")) # Assign 1 treatment to check the model
 # treat.group = as.factor(c("ambient drought","ambient watered")) # Assign 2 treatments to compare the results
 treat.group = as.factor(c("ambient drought","ambient watered","elevated drought","elevated watered")) # Assign all treatments
 data.all = read.csv("processed_data/data_all.csv") 
 tnc.partitioning = read.csv("processed_data/tnc_partitioning_data.csv")
 
+# # Consider the uncertainty 10% of original values
+# data.all[,c("RM_SE","LM_SE","WM_SE","litter_SE","TNC_leaf_SE","Ra_SE")] = 0.1 * data.all[,c("RM_SE","LM_SE","WM_SE","litter_SE","TNC_leaf_SE","Ra_SE")] 
+
+#-------------------------------------------------------------------------------------
+# # Consider the second part of the experiment only
+# data.all$Date = as.Date(data.all$Date)
+# tnc.partitioning$Date = as.Date(tnc.partitioning$Date)
+# data.all = subset(data.all, Date >= as.Date("2014-02-04") & Date <= as.Date("2014-05-26"))
+# tnc.partitioning = subset(tnc.partitioning, Date >= as.Date("2014-02-04") & Date <= as.Date("2014-05-26"))
+
+# #-------------------------------------------------------------------------------------
+# #- Matching C balance of the entire experiment considering C inputs and outputs
+# source("R/C_balance_wtc3.R")
+# 
+# #-------------------------------------------------------------------------------------
+
 source("R/functions_wtc3.R")	
 source("R/functions_wtc3_CBM.R")	
 start <- proc.time() # Start clock
 # 3000 chain length is sufficient for the convergance
+chainLength = 1000
+no.param.par.var = 4
 with.storage = T
-result = CBM.wtc3(chainLength = 3000, no.param.par.var=(nrow(data.all)/4)/30, treat.group=treat.group, with.storage, model.comparison=F, model.optimization=F) # Monthly parameters
-# result = CBM.wtc3(chainLength = 3000, no.param.par.var=4, treat.group=treat.group, with.storage, model.comparison=F, model.optimization=F) # Quadratic/Cubic parameters
+model.comparison=F
+model.optimization=F
+# result = CBM.wtc3(chainLength = 3000, no.param.par.var=(nrow(data.all)/4)/30, treat.group=treat.group, with.storage, model.comparison=F, model.optimization=F) # Monthly parameters
+result = CBM.wtc3(chainLength, no.param.par.var, treat.group, with.storage, model.comparison, model.optimization) # Quadratic/Cubic parameters
 time_elapsed_series <- proc.time() - start # End clock
 result[[6]]
 write.csv(result[[6]], "output/bic.csv", row.names=FALSE) # unit of respiration rates: gC per gC plant per day	

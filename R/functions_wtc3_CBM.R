@@ -7,8 +7,8 @@
 # This script calcualtes LogLikelihood to find the most accurate model
 logLikelihood.wtc3 <- function (no.param.par.var,data.set,output,with.storage,model.comparison) {
   logLi <- matrix(0, nrow=nrow(data.set), ncol = 1) # Initialising the logLi
-  data_count = sum(!is.na(data.set$LM)) + sum(!is.na(data.set$WM)) + sum(!is.na(data.set$RM)) + sum(!is.na(data.set$Ra)) + sum(!is.na(data.set$TNC_leaf)) + sum(!is.na(data.set$litter))
-  # data_count = sum(!is.na(data.set$LM)) + sum(!is.na(data.set$WM)) + sum(!is.na(data.set$RM)) + sum(!is.na(data.set$TNC_leaf)) + sum(!is.na(data.set$litter))
+  # data_count = sum(!is.na(data.set$LM)) + sum(!is.na(data.set$WM)) + sum(!is.na(data.set$RM)) + sum(!is.na(data.set$Ra)) + sum(!is.na(data.set$TNC_leaf)) + sum(!is.na(data.set$litter))
+  data_count = sum(!is.na(data.set$LM)) + sum(!is.na(data.set$WM)) + sum(!is.na(data.set$RM)) + sum(!is.na(data.set$TNC_leaf)) + sum(!is.na(data.set$litter))
   
   for (i in 1:nrow(data.set)) {
     if (!is.na(data.set$LM[i])) {
@@ -21,11 +21,11 @@ logLikelihood.wtc3 <- function (no.param.par.var,data.set,output,with.storage,mo
       logLi[i] = logLi[i] - ((data_count/sum(!is.na(data.set$RM)))*(0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5)) # multiplied by 2 to give extra weight
       # logLi[i] = logLi[i] - (0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5) # multiplied by 20 to give extra weight
     }
-    if (i > 1) {
-      if (!is.na(data.set$Ra[i])) {
-        logLi[i] = logLi[i] - ((data_count/sum(!is.na(data.set$Ra)))*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5))
-      }
-    }
+    # if (i > 1) {
+    #   if (!is.na(data.set$Ra[i])) {
+    #     logLi[i] = logLi[i] - ((data_count/sum(!is.na(data.set$Ra)))*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5))
+    #   }
+    # }
     if (!is.null(data.set$litter)) {
       if (!is.na(data.set$litter[i])) {
         logLi[i] = logLi[i] - (data_count/sum(!is.na(data.set$litter)))*0.5*((output$Mlit[i] - data.set$litter[i])/data.set$litter_SE[i])^2 - log(data.set$litter_SE[i]) - log(2*pi)^0.5
@@ -60,23 +60,23 @@ logLikelihood.wtc3.final <- function (no.param.par.var,data.set,output,with.stor
       # logLi[i] = logLi[i] - 10*(0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5) # multiplied by 20 to give extra weight
       logLi[i] = logLi[i] - (0.5*((output$Mroot[i] - data.set$RM[i])/data.set$RM_SE[i])^2 - log(data.set$RM_SE[i]) - log(2*pi)^0.5) # multiplied by 20 to give extra weight
     }
-    if (i > 1) {
-      if (!is.na(data.set$Ra[i])) {
-        # if (no.param.par.var < 4) {
-        # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
-        #                                Y[i]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
-        #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
-        logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-        # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-        # } else { # no.param.par.var > 4; monthly parameter setting)
-        # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
-        #                                Y[(i-1)-(j[i-1])]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
-        #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
-        # logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-        # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
-        # }
-      }
-    }
+    # if (i > 1) {
+    #   if (!is.na(data.set$Ra[i])) {
+    #     # if (no.param.par.var < 4) {
+    #     # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
+    #     #                                Y[i]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
+    #     #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
+    #     logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
+    #     # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
+    #     # } else { # no.param.par.var > 4; monthly parameter setting)
+    #     # logLi[i] = logLi[i] - 0.5*(((data.set$Rd.foliage.mean[i]*output$Mleaf[i] + data.set$Rd.stem.mean[i]*output$Mwood[i]*data.set$SMratio[i] + data.set$Rd.branch.mean[i]*output$Mwood[i]*data.set$BMratio[i] +
+    #     #                                Y[(i-1)-(j[i-1])]*(output$Mleaf[i]-output$Mleaf[i-1] + output$Mwood[i]-output$Mwood[i-1]) ) -
+    #     #                               data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5
+    #     # logLi[i] = logLi[i] - (0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
+    #     # logLi[i] = logLi[i] - 0.1*(0.5*((output$Rabove[i] - data.set$Ra[i]) / data.set$Ra_SE[i])^2 - log(data.set$Ra_SE[i]) - log(2*pi)^0.5)
+    #     # }
+    #   }
+    # }
     if (!is.null(data.set$litter)) {
       if (!is.na(data.set$litter[i])) {
         logLi[i] = logLi[i] - 0.5*((output$Mlit[i] - data.set$litter[i])/data.set$litter_SE[i])^2 - log(data.set$litter_SE[i]) - log(2*pi)^0.5
@@ -323,26 +323,48 @@ CBM.wtc3 <- function(chainLength, no.param.par.var, treat.group, with.storage, m
           # Accepting or rejecting the candidate vector
           # if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues$af[1] + candidatepValues$as[1] <= 1
           #      && candidatepValues$as[1] >= 0 && candidatepValues$af[1] >= 0 && candidatepValues$af[2] >= 0 && candidatepValues$af[3] >= 0 && candidatepValues$af[4] >= 0) {
-          if (no.param.par.var < 5) {
-            if ( log(runif(1, min = 0, max =1)) < logalpha 
-                 # && candidatepValues$af[1] + candidatepValues$as[1] <= 1
-                 && (candidatepValues$sr[1]*(nrow(data.set)) + candidatepValues$sr[2]*(nrow(data.set))^2 + candidatepValues$sr[3]*(nrow(data.set))^3 + candidatepValues$sr[4]*(nrow(data.set))^4) >= 0
+          if (no.param.par.var == 4) {
+            if ( log(runif(1, min = 0, max =1)) < logalpha && (candidatepValues$sr[1]*(nrow(data.set)) + candidatepValues$sr[2]*(nrow(data.set))^2 + candidatepValues$sr[3]*(nrow(data.set))^3 + candidatepValues$sr[4]*(nrow(data.set))^4) >= 0
                  && (candidatepValues$sf[1]*(nrow(data.set)) + candidatepValues$sf[2]*(nrow(data.set))^2 + candidatepValues$sf[3]*(nrow(data.set))^3 + candidatepValues$sf[4]*(nrow(data.set))^4) >= 0
                  && (candidatepValues$k[1]*(nrow(data.set)) + candidatepValues$k[2]*(nrow(data.set))^2 + candidatepValues$k[3]*(nrow(data.set))^3 + candidatepValues$k[4]*(nrow(data.set))^4) >= 0
                  && (candidatepValues$as[1]*(nrow(data.set)) + candidatepValues$as[2]*(nrow(data.set))^2 + candidatepValues$as[3]*(nrow(data.set))^3 + candidatepValues$as[4]*(nrow(data.set))^4) >= 0
                  && (candidatepValues$af[1]*(nrow(data.set)) + candidatepValues$af[2]*(nrow(data.set))^2 + candidatepValues$af[3]*(nrow(data.set))^3 + candidatepValues$af[4]*(nrow(data.set))^4) >= 0) {
-            # if ( log(runif(1, min = 0, max =1)) < logalpha) {
-            pValues <- candidatepValues
-            logPrior0 <- logPrior1
-            logL0 <- logL1
+              pValues <- candidatepValues
+              logPrior0 <- logPrior1
+              logL0 <- logL1
+            }
+          } else if (no.param.par.var == 3) {
+            if ( log(runif(1, min = 0, max =1)) < logalpha && (candidatepValues$sr[1]*(nrow(data.set)) + candidatepValues$sr[2]*(nrow(data.set))^2 + candidatepValues$sr[3]*(nrow(data.set))^3) >= 0
+                 && (candidatepValues$sf[1]*(nrow(data.set)) + candidatepValues$sf[2]*(nrow(data.set))^2 + candidatepValues$sf[3]*(nrow(data.set))^3) >= 0
+                 && (candidatepValues$k[1]*(nrow(data.set)) + candidatepValues$k[2]*(nrow(data.set))^2 + candidatepValues$k[3]*(nrow(data.set))^3) >= 0
+                 && (candidatepValues$as[1]*(nrow(data.set)) + candidatepValues$as[2]*(nrow(data.set))^2 + candidatepValues$as[3]*(nrow(data.set))^3) >= 0
+                 && (candidatepValues$af[1]*(nrow(data.set)) + candidatepValues$af[2]*(nrow(data.set))^2 + candidatepValues$af[3]*(nrow(data.set))^3) >= 0) {
+              pValues <- candidatepValues
+              logPrior0 <- logPrior1
+              logL0 <- logL1
+            }
+          } else if (no.param.par.var == 2) {
+            if ( log(runif(1, min = 0, max =1)) < logalpha && (candidatepValues$sr[1]*(nrow(data.set)) + candidatepValues$sr[2]*(nrow(data.set))^2) >= 0
+                 && (candidatepValues$sf[1]*(nrow(data.set)) + candidatepValues$sf[2]*(nrow(data.set))^2) >= 0
+                 && (candidatepValues$k[1]*(nrow(data.set)) + candidatepValues$k[2]*(nrow(data.set))^2) >= 0
+                 && (candidatepValues$as[1]*(nrow(data.set)) + candidatepValues$as[2]*(nrow(data.set))^2) >= 0
+                 && (candidatepValues$af[1]*(nrow(data.set)) + candidatepValues$af[2]*(nrow(data.set))^2) >= 0) {
+              pValues <- candidatepValues
+              logPrior0 <- logPrior1
+              logL0 <- logL1
+            }
+          } else if (no.param.par.var == 1) {
+            if ( log(runif(1, min = 0, max =1)) < logalpha && (candidatepValues$sr[1]*(nrow(data.set)) + candidatepValues$sr[2]*(nrow(data.set))^2) >= 0
+                 && (candidatepValues$sf[1]*(nrow(data.set))) >= 0
+                 && (candidatepValues$k[1]*(nrow(data.set))) >= 0
+                 && (candidatepValues$as[1]*(nrow(data.set))) >= 0
+                 && (candidatepValues$af[1]*(nrow(data.set))) >= 0) {
+              pValues <- candidatepValues
+              logPrior0 <- logPrior1
+              logL0 <- logL1
             }
           } else {
             if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues >= 0 && (candidatepValues$af + candidatepValues$as) < 1) {
-                 # && candidatepValues$sr >= 0
-                 # && candidatepValues$sf >= 0
-                 # && candidatepValues$k >= 0
-                 # && candidatepValues$as >= 0
-                 # && candidatepValues$af >= 0) {
               pValues <- candidatepValues
               logPrior0 <- logPrior1
               logL0 <- logL1
@@ -777,16 +799,17 @@ model <- function (no.param,data.set,tnc.partitioning,Y,k,af,as,sf,sr) {
   Mleaf[1] <- data.set$LM[1]
   Mwood[1] <- data.set$WM[1]
   Mroot[1] <- data.set$RM[1]
-  Mlit[1] <- data.set$litter[1]
+  # Mlit[1] <- data.set$litter[1]
+  Mlit[1] <- data.set$litter[min(which(complete.cases(data.set$litter)))]*0.75
   
   Cstorage = Sleaf = Swood = Sroot = c()
   
   # From WTC-4 experiment for TNC partitioning to tree organs
   # Leaf TNC C / Leaf C =  ; wood TNC C / wood C =  ; Root TNC C / Root C =  
-  Sleaf[1] = data.set$TNC_leaf[min(which(complete.cases(data.set$TNC_leaf)))] # Consider the first available leaf tnc data as the starting point
-  Swood[1] = data.set$TNC_wood[min(which(complete.cases(data.set$TNC_wood)))] # Consider the first available leaf tnc data as the starting point
-  Sroot[1] = data.set$TNC_root[min(which(complete.cases(data.set$TNC_root)))] # Consider the first available leaf tnc data as the starting point
-  Cstorage[1] = data.set$TNC_tot[min(which(complete.cases(data.set$TNC_tot)))] # Consider the first available leaf tnc data as the starting point
+  Sleaf[1] = data.set$TNC_leaf[min(which(complete.cases(data.set$TNC_leaf)))]*0.75 # Consider the first available leaf tnc data as the starting point
+  Swood[1] = data.set$TNC_wood[min(which(complete.cases(data.set$TNC_wood)))]*0.75 # Consider the first available leaf tnc data as the starting point
+  Sroot[1] = data.set$TNC_root[min(which(complete.cases(data.set$TNC_root)))]*0.75 # Consider the first available leaf tnc data as the starting point
+  Cstorage[1] = data.set$TNC_tot[min(which(complete.cases(data.set$TNC_tot)))]*0.75 # Consider the first available leaf tnc data as the starting point
   
   Cleaf <- Croot <- Cwood <- Rm <- c()
   Cleaf[1] <- data.set$LM[1] - Sleaf[1]
@@ -1048,7 +1071,7 @@ model.without.storage.monthly <- function (data.set,j,Y,af,as,sf,sr) {
 #-------------------------------------------------------------------------------------
 plot.Modelled.parameters <- function(result,with.storage) { 
   # cbPalette = c("gray", "skyblue", "orange", "green3", "yellow3", "#0072B2", "#D55E00")
-  cbPalette = c("darkorange", "cyan", "firebrick", "deepskyblue3")
+  cbPalette = c("cyan", "darkorange", "firebrick", "deepskyblue3")
   i = 0
   font.size = 10
   plot = list() 
@@ -1166,7 +1189,7 @@ plot.Modelled.parameters <- function(result,with.storage) {
 #-------------------------------------------------------------------------------------
 plot.Modelled.biomass <- function(result,with.storage) { 
   # cbPalette = c("gray", "skyblue", "orange", "green3", "yellow3", "#0072B2", "#D55E00")
-  cbPalette = c("darkorange", "cyan", "firebrick", "deepskyblue3")
+  cbPalette = c("cyan", "darkorange", "firebrick", "deepskyblue3")
   i = 0
   font.size = 10
   plot = list() 

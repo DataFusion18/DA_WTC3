@@ -1,5 +1,5 @@
 #' ---	
-#' title: "Processing WTC-3 data for Carbon Balance Model (CBM)"	
+#' title: "Processing WTC-3 data to infer both temperature and drought effects on Carbon Balance"	
 #' author: "Kashif Mahmud"	
 #' date: "16 October 2017"	
 #' output:	
@@ -53,7 +53,7 @@ plot.model.wtc3()
 #' 	
 #' The non-structural (storage) C pool (C~n~) is assumed to be divided among foliage, wood and root tissues (C~n,f~, C~n,w~, C~n,r~) according to empirically-determined fractions.   	
 #'   - *However, WTC-3 experiment only measured leaf non-structural C (C~n,f~), and therefore to estimate the partitioning of the non-structural C among different organs, we hope to use data from WTC-4 experiment on similar-sized seedlings of a related species (Eucalyptus parramattensis). We will consider different treatments from the experimental dataset, to find the C~n~ partitioning to foliage, wood and roots.*   	
-#'   - *Another possibility (if WTC-4 data are not available!!) would be to assume another two parameters to estimate the C~n~ partitioning to foliage, wood and roots (p~f~, C~n~ partitioning to foliage; p~w~, C~n~ partitioning to wood; $p_r = (1-p_f-p_w)$, C~n~ partitioning to roots).*   	
+#'   - *Another possibility (if WTC-4 data are not available!!) would be to assume another two parameters to estimate the C~n~ partitioning to foliage, wood and roots (p~f~, C~n~ partitioning to foliage; p~w~, C~n~ partitioning to wood; $p_r = (1-p_f-p_w)$, C~n~ partitioning to roots).*	
 #'   	
 #' Total carbon in each tissue (C~t~) is then calculated as the sum of non-structural carbon (C~n~) and structural carbon (C~s~) for that tissue.    	
 #' 	
